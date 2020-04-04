@@ -1,0 +1,123 @@
+using System.IO;
+using OfficeOpenXml;
+using OfficeOpenXml.ExcelPackage;
+using OfficeOpenXml.ExcelRange;
+
+class CustomerPaymentJob
+{
+/// <summary>
+/// Runs the class with the specified arguments.
+/// </summary>
+/// <param name = “_args”>The specified arguments.</param>
+public static void main(Args _args)
+{
+System.IO.Stream stream;
+LedgerJournalTable lederJournalTable;
+LedgerJournalTrans ledgerJournalTrans;
+
+NumberSequenceTable numberSequenceTable;
+
+ExcelSpreadsheetName sheeet;
+FileUploadBuild fileUpload;
+DialogGroup dlgUploadGroup;
+FileUploadBuild fileUploadBuild;
+FormBuildControl formBuildControl;
+Dialog dialog = new Dialog(“Import the Customer payment Journal data from Excel”);
+
+dlgUploadGroup = dialog.addGroup(“@SYS54759”);
+formBuildControl = dialog.formBuildDesign().control(dlgUploadGroup.name());
+fileUploadBuild = formBuildControl.addControlEx(classstr(FileUpload), ‘Upload’);
+fileUploadBuild.style(FileUploadStyle::MinimalWithFilename);
+fileUploadBuild.fileTypesAccepted(‘.xlsx’);
+
+if (dialog.run() && dialog.closedOk())
+{
+FileUpload fileUploadControl = dialog.formRun().control(dialog.formRun().controlId(‘Upload’));
+FileUploadTemporaryStorageResult fileUploadResult = fileUploadControl.getFileUploadResult();
+
+if (fileUploadResult != null && fileUploadResult.getUploadStatus())
+{
+stream = fileUploadResult.openResult();
+using (ExcelPackage Package = new ExcelPackage(stream))
+{
+int rowCount, i;
+
+Package.Load(stream);
+ExcelWorksheet worksheet = package.get_Workbook().get_Worksheets().get_Item(1);
+OfficeOpenXml.ExcelRange range = worksheet.Cells;
+rowCount = worksheet.Dimension.End.Row – worksheet.Dimension.Start.Row + 1;
+
+for (i = 2; i<= rowCount; i++)
+{
+
+DimensionDisplayValue offsetValue = range.get_Item(i, 11).value;
+DimensionDisplayValue accountValue = range.get_Item(i, 4).value;
+lederJournalTable.JournalName = range.get_Item(i, 1).value;
+lederJournalTable.insert();
+
+ledgerJournalTrans.JournalNum = lederJournalTable.JournalNum;
+
+ledgerJournalTrans.TransDate = DateTimeUtil::date(range.get_Item(i, 2).value);
+ledgerJournalTrans.Company = range.get_Item(i, 3).value;
+ledgerJournalTrans.AccountType = LedgerJournalACType::Cust;
+ledgerJournalTrans.LedgerDimension = LedgerDynamicAccountHelper::getDynamicAccountFromAccountNumber(range.get_Item(i, 4).value, LedgerJournalACType::Cust);
+
+if (ledgerJournalTrans.AccountType == LedgerJournalACType::Cust)
+{
+ledgerJournalTrans.DefaultDimension = CustTable::find(accountValue).DefaultDimension;
+}
+
+ledgerJournalTrans.MarkedInvoice = range.get_Item(i, 5).value;
+ledgerJournalTrans.Txt = range.get_Item(i, 6).value;
+ledgerJournalTrans.AmountCurDebit = any2Real(range.get_Item(i, 7).value);
+ledgerJournalTrans.AmountCurCredit = any2real(range.get_Item(i, 8).value);
+ledgerJournalTrans.CurrencyCode = range.get_Item(i, 9).value;
+LedgerJournalACType ljcType;
+ledgerJournalTrans.OffsetAccountType = str2Enum(ljcType, range.get_Item(i, 10).value);
+
+DimensionAttributeValueCombination dimAttrValComb;
+
+select RecId from dimAttrValComb
+where dimAttrValComb.DisplayValue == offsetValue;
+
+if(dimAttrValComb)
+{
+ledgerJournalTrans.OffsetLedgerDimension = dimAttrValComb.RecId;
+}
+
+if (ledgerJournalTrans.OffsetAccountType == LedgerJournalACType::Bank)
+{
+ledgerJournalTrans.OffsetDefaultDimension = BankAccountTable::find(offsetValue).DefaultDimension;
+}
+else if (ledgerJournalTrans.OffsetAccountType == LedgerJournalACType::Cust)
+{
+ledgerJournalTrans.OffsetDefaultDimension = CustTable::find(offsetValue).DefaultDimension;
+}
+else if (ledgerJournalTrans.OffsetAccountType == LedgerJournalACType::Project)
+{
+ledgerJournalTrans.OffsetDefaultDimension = ProjTable::find(offsetValue).DefaultDimension;
+}
+else if (ledgerJournalTrans.OffsetAccountType == LedgerJournalACType::FixedAssets)
+{
+ledgerJournalTrans.OffsetDefaultDimension = AssetTable::find(offsetValue).DefaultDimension;
+}
+
+ledgerJournalTrans.PaymMode = range.get_Item(i, 12).value;
+ledgerJournalTrans.PaymReference = range.get_Item(i, 13).value;
+
+numberSequenceTable = NumberSequenceTable::find(LedgerJournalName::find (lederJournalTable.JournalName).NumberSequenceTable);
+ledgerJournalTrans.Voucher = NumberSeq::newGetVoucherFromCode(numberSequenceTable.NumberSequence).voucher();
+
+ledgerJournalTrans.insert();
+}
+}
+}
+else
+{
+error(“Error here”);
+}
+
+}
+}
+
+}
