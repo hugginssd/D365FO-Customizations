@@ -1,0 +1,24 @@
+//Author: Mafigu Huggins
+//Tel: +263 782 326 160
+//Email: mafiguhuggins@gmail.com
+
+//Get the customer sales limit to all legal entities in AX2012/D365FO
+
+static void getCreditLimit(Args _args)
+{
+container company;
+CustTable custTable;
+DirPartyTable dirPartyTable;
+
+CustCreditMaxMST groupLimit;
+
+while select crossCompany dirPartyTable
+where dirPartyTable.PartyNumber == ‘000008702’
+join custTable
+where dirPartyTable.RecId == custTable.Party
+{
+groupLimit += custTable.CreditMax;
+info(strFmt(“%1 – %2 -%3 – %4”,dirPartyTable.PartyNumber,dirPartyTable.Name,custTable.CreditMax,custTable.dataAreaId));
+
+}
+info(strFmt(“%1”,groupLimit));
