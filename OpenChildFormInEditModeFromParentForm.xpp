@@ -1,0 +1,26 @@
+//Author:   Mafigu Huggins
+//Email:    mafiguhuggins@gmail.com
+//Tel:      +263 782 326 160
+
+
+//Open the Child form from Parent form in Edit mode using X++
+
+
+FormRun formRun;
+
+Args args;
+str defaultFormOnTable;
+MenuFunction menuFunction;
+
+args = new Args();
+args.record(CustTable::find(‘test account’));
+
+menuFunction = new MenuFunction(menuitemDisplayStr(CustTable), MenuItemType::Display);
+
+if(menuFunction)
+{
+menuFunction.openMode(OpenMode::Edit);
+formRun = menuFunction.create(args);
+if(formRun)
+formRun.run();
+}
