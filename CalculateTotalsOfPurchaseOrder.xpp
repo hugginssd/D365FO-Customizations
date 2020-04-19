@@ -1,0 +1,19 @@
+//Author:   Mafigu Huggins
+//Email:    mafiguhuggins@gmail.com
+//Tel:      +263 782 326 160
+
+
+class CalculateTotalsOfPurchaseOrder
+{
+    public static void main(Args _args)
+    {
+        //Calculate totals per Purchase order
+        PurchTotals purchTotals;
+        PurchTable  purchTable  = PurchTable::find('PO.000018'); //Change the Purchase Order Id as per your system's data
+        AmountCur   totalAmount;
+        purchTotals = PurchTotals::newPurchTable(purchTable);
+        purchTotals.calc();
+        totalAmount = purchTotals.purchTotalAmount();
+        info(strFmt("Purchase order: %1 - Total value: %2", purchTable.PurchId, totalAmount));
+    }
+}
