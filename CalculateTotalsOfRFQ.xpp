@@ -1,0 +1,20 @@
+//Author:   Mafigu Huggins
+//Email:    mafiguhuggins@gmail.com
+//Tel:      +263 782 326 160
+
+//Calculate totals of RFQ reply using X++ in D365FO
+
+class CalculateTotalsOfRFQReply
+{
+    public static void main(Args _args)
+    {
+        //Calculate totals of RFQ reply per vendor using RFQID
+        PurchRFQReplyTable  PurchRFQReplyTable  = PurchRFQReplyTable::find('RFQ.000002'); // change the RFQID as per your system's data
+        PurchRFQTotals purchRFQTotals = PurchRFQTotals::construct(PurchRFQReplyTable);
+        AmountCur   totalAmount;
+        purchRFQTotals.calc();
+        totalAmount = purchRFQTotals.totalAmount();
+        info(strFmt("RFQ Reply: %1 - Total value: %2", PurchRFQReplyTable.RFQId, purchRFQTotals.totalAmount()));
+    }
+
+}
