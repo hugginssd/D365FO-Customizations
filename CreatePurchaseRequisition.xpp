@@ -1,0 +1,36 @@
+//Author:   Mafigu Huggins
+//Email:    mafiguhuggins@gmail.com
+//Tel:      +263 782 326 160
+
+
+class CreatePurchaseRequisition
+{
+    public static void main(Args _args)
+    {
+        PurchReqTable   purchReqTable;
+        PurchReqLine    purchReqLine;
+         
+        ttsbegin; 
+        //Purchase requisition header          
+        purchReqTable.clear();
+        purchReqTable.initValue();
+        purchReqTable.PurchReqId    =  NumberSeq::newGetNum(PurchReqTable::numRefPurchReqId()).num();
+        purchReqTable.PurchReqName  = 'PR from X++ Job';
+        purchReqTable.insert();
+          
+        //Purchase requisition lines
+        purchReqLine.clear();
+        purchReqLine.initValue();            
+        purchReqLine.initFromPurchReqTable(purchReqTable);
+        purchReqLine.ItemId              = "PRD000711"; //Replace ItemId according to your system's data
+        purchReqLine.BuyingLegalEntity   = CompanyInfo::find().RecId;
+        purchReqLine.InventDimIdDataArea = curext();
+        purchReqLine.PurchQty            = 2;
+        purchReqLine.modifiedField(fieldNum(purchReqLine,ItemId));
+        purchReqLine.insert();
+        ttscommit;
+
+        info(strFmt("Purchase requisition '%1' created successfully",purchReqTable.PurchReqId));
+    }
+
+}
