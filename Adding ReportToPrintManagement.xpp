@@ -1,0 +1,40 @@
+//Author:   Mafigu Huggins
+//Email:    mafiguhuggins@gmail.com
+//Tel:      +263 782 326 160
+
+//Adding the report to the print management
+
+
+class PrintManagementExt   
+ {  
+   /// <summary>  
+   /// Delegate handler for the getDefaultReportFormatDelegate method of the <c>PrintMgmtDocType</c> class.  
+   /// </summary>  
+   /// <param name = "_docType"><c>PrintMgmtDocumentType</c> enumeration value.</param>  
+   /// <param name = "_result">The <c>EventHandlerResult</c> object.</param>  
+   [SubscribesTo(classstr(PrintMgmtDocType), delegatestr(PrintMgmtDocType, getDefaultReportFormatDelegate))]  
+   public static void getDefaultReportFormatDelegateHandler(PrintMgmtDocumentType _docType, EventHandlerResult _result)  
+   {  
+     PrintMgmtReportFormatName formatName = hsPrintMgmtDelegatesHandler::getDefaultReportFormat(_docType);  
+     if (formatName)  
+     {  
+       _result.result(formatName);  
+     }  
+   }  
+   /// <summary>  
+   /// Gets the report format value.  
+   /// </summary>  
+   /// <param name = "_docType">The <c>PrintMgmtDocumentType</c> enumeration value.</param>  
+   /// <returns>The report format value.</returns>  
+   private static PrintMgmtReportFormatName getDefaultReportFormat(PrintMgmtDocumentType _docType)  
+   {  
+     switch (_docType)  
+     {  
+       case PrintMgmtDocumentType::PurchaseOrderRequisition:  
+         return ssrsReportStr(PurchPurchaseOrderCopy, Report);  
+       case PrintMgmtDocumentType::PurchaseOrderConfirmationRequest:  
+         return ssrsReportStr(PurchPurchaseOrderCopy, Report);  
+     }  
+     return '';  
+   }  
+ }  
