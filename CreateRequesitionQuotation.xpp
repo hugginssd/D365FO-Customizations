@@ -1,0 +1,42 @@
+//Author:   Mafigu Huggins
+//Email:    mafiguhuggins@gmail.com
+//Tel:      +263 782 326 160
+
+//Create request for quotation using x++ in D365FO
+
+  AxPurchRFQCaseTable         axPurchRFQCaseTable;
+    AxPurchRFQCaseLine          axPurchRFQCaseLine;
+    PurchRFQCaseTable           purchRFQCaseTable;
+    PurchRFQCaseLine            purchRFQCaseLine;
+    str         RFQCaseId;
+    NumberSeq numberSeq;
+
+    numberSeq = NumberSeq::newGetNum(purchParameters::numRefPurchRFQCaseId());
+    numberSeq.used();
+    RFQCaseId = numberSeq.num();
+    axPurchRFQCaseTable = new AxPurchRFQCaseTable();
+    axPurchRFQCaseTable.parmRFQCaseId(RFQCaseId);
+    axPurchRFQCaseTable.parmBidType(PurchRFQBidType::Open);
+    axPurchRFQCaseTable.parmCurrencyCode('USD');
+    axPurchRFQCaseTable.save();
+
+    axPurchRFQCaseLine = new AxPurchRFQCaseLine();
+    axPurchRFQCaseLine.axPurchRFQCaseTable(axPurchRFQCaseTable);
+    axPurchRFQCaseLine.parmRFQCaseId(axPurchRFQCaseTable.parmRFQCaseId());
+    axPurchRFQCaseLine.axPurchRFQCaseTable(axPurchRFQCaseTable);
+    axPurchRFQCaseLine.parmLineItemType(PurchRFQLineItemType::Item);
+    axPurchRFQCaseLine.parmItemId('PRD000709'); //Replace ItemId as per your system's data
+    axPurchRFQCaseLine.parmItemName(InventTable::find('PRD000709').itemName()); //Replace ItemId as per your system's data 
+    axPurchRFQCaseLine.parmPurchQty(10);
+    InventDim                            inventDim;
+    inventDim.InventLocationId = InventLocation::find('MW').InventLocationId; //Replace Warehouse as per your system's data 
+    inventDim.InventSiteId     = InventLocation::find('MS').InventSiteId; //Replace Site as per your system's data 
+    inventDim                  = InventDim::findOrCreate(inventDim);
+
+   
+    axPurchRFQCaseLine.parmInventDimId(inventDim.inventDimId);
+//parmInventDimId('MIPL-000002');
+    axPurchRFQCaseLine.parmCurrencyCode('USD');
+    //axPurchRFQCaseLine.parmDefaultDimension(5637144576);
+//Replace Default Dimension Rec Id as per your system's data 
+    axPurchRFQCaseLine.save();
