@@ -1,0 +1,38 @@
+//Author: Mafigu Huggins
+//Tel: +263 782 326 160
+//Email: mafiguhuggins@gmail.com
+
+
+//Below is the function which returns the value of given dimension name e.g. BusinessUnit
+
+//For AX 2012
+public str getDimensionDisplayValue(RecId defaultDimension, Name dimName)
+{
+     DimensionAttributeValueSetStorage dimStorage;
+     dimStorage = DimensionAttributeValueSetStorage::find(defaultDimension);
+     return dimStorage.getDisplayValueByDimensionAttribute(DimensionAttribute::findByName(dimName).RecId);
+}
+
+//OR
+
+//For D365FO
+public static str getDimensionDisplayValue(RecId defaultDimension, Name dimName)
+{
+     DimensionAttributeValueSetStorage dimStorage;
+     dimStorage = DimensionAttributeValueSetStorage::find(defaultDimension);
+     return dimStorage.getDisplayValueByDimensionAttribute(DimensionAttribute::findByName(dimName).RecId);
+}
+
+
+//DefaultDimension is retrived from PurchTable just to give you an example. You can pass any DefaultDimension value
+//'Project' is the name of the financial dimension. You can use 'BusinessUnit', 'Worker' or 'CostCenter' etc.
+//call the function as follows:
+
+str dimensionValue;
+
+dimensionValue = this.getDimensionDisplayValue(purchTable.DefaultDimension, 'Project'); //For AX2012
+
+//OR
+
+//ClassName is the class in which the function is written. Make it static in D365FO to call it as follows:
+dimensionValue = ClassName::getDimensionDisplayValue(purchTable.DefaultDimension, 'Project'); //For D365FO
