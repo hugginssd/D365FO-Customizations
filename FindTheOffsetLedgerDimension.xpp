@@ -1,0 +1,16 @@
+//Author:   Mafigu Huggins
+//Email:    mafiguhuggins@gmail.com
+//Tel:      +263 782 326 160
+
+
+//find the offset Ledger Dimension using X++
+
+
+static void findoffsetledgerdimension(Args _args)
+{
+LedgerDimensionAccount ledgerDim;
+;
+
+ledgerDim = DimensionStorage::getDynamicAccount(‘12335’, LedgerJournalACType::Cust);
+info(strFmt(“%1”, ledgerDim));
+}
