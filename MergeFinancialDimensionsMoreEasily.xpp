@@ -1,0 +1,43 @@
+//Author:   Mafigu Huggins
+//Email:    mafiguhuggins@gmail.com
+//Tel:      +263 782 326 160
+
+//Merging financial dimensions more easily in x++
+
+
+static void EDC_mergeDimTester(Args _args)
+{
+    // Classes & Others
+    DimensionMerge   dimMerge;
+    DimensionValue   dimValue;
+    Map              dimSpecifiers;
+    MapEnumerator    enumerator;
+ 
+    // Default dimensions IDs
+    DimensionDefault primaryDim   = 52565472013;
+    DimensionDefault secondaryDim = 22565442003;
+    DimensionDefault mergedDim;
+ 
+    // Table Buffers
+    CustTable           custTable;
+    DimensionAttribute  dimensionAttribute;
+ 
+    // Since this is a customer's dimension merge, we can use "DimensionMerge" class
+    // initializing from a table buffer
+    dimMerge    = DimensionMerge::newFromTable(CustTable, CompanyInfo::find().RecId);
+    mergedDim   = dimMerge.merge(primaryDim, secondaryDim);
+ 
+    // DimensionDefaultingEngine::getDefaultDimensionSpecifiers takes DefaultDimension into values.
+    dimSpecifiers = DimensionDefaultingEngine::getDefaultDimensionSpecifiers(mergedDim);
+    enumerator    = dimSpecifiers.getEnumerator();
+ 
+    // Infolog to all dimension values
+    while (enumerator.moveNext())
+    {
+        dimValue = enumerator.currentValue();
+ 
+        info(strfmt("Dimension: %1, Value: %2",
+            dimensionAttribute::find(enumerator.currentKey()).Name,
+            dimValue));
+    }
+}
