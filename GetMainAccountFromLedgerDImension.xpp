@@ -1,0 +1,12 @@
+//Author: Mafigu Huggins
+//Tel: +263 782 326 160
+//Email: mafiguhuggins@gmail.com
+
+
+//Get MainAccountId from LedgerDimension
+//The argument (LedgerDimensionValue) is LedgerDimension which you can get from table or any other source as per your requirement
+info(strFmt("%1",LedgerDimensionFacade::getMainAccountFromLedgerDimension(LedgerDimensionValue).MainAccountId));
+
+//Get Name of MainAccountId from LedgerDimension
+//The argument (LedgerDimensionValue) is LedgerDimension which you can get from table or any other source as per your requirement
+info(strFmt("%1",LedgerDimensionFacade::getMainAccountFromLedgerDimension(LedgerDimensionValue).Name));
