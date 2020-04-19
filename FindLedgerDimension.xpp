@@ -1,0 +1,45 @@
+//Author:   Mafigu Huggins
+//Email:    mafiguhuggins@gmail.com
+//Tel:      +263 782 326 160
+
+//To find ledger Dimension using Financial Dimensions using X++
+
+static void findledgerDimension()
+{
+LedgerDimensionAccount ledgerDimension, ledgerDimension4;
+
+Struct struct = new Struct();
+container ledgerDimensionCon;
+DimensionDefault DimensionDefault;
+DimensionValue mainaccount,businessunit,department, costCenter;
+
+#define.BusinessUnit(‘BusinessUnit’)
+#define.Department(‘Department’)
+#define.CostCenter(‘CostCenter’)
+#define.MainAccount(‘MainAccount’)
+int i;
+;
+
+mainaccount = ‘110110’;
+businessunit = ‘001’;
+department = ‘022’;
+ledgerDimensionCon = conNull();
+
+struct.add(#MainAccount,mainaccount);
+struct.add(#BusinessUnit,businessunit);
+struct.add(#Department,department);
+
+ledgerDimensionCon += struct.fields();
+ledgerDimensionCon += struct.fieldName(1);
+ledgerDimensionCon += struct.valueIndex(1);
+ledgerDimensionCon += struct.fieldName(2);
+ledgerDimensionCon += struct.valueIndex(2);
+ledgerDimensionCon += struct.fieldName(3);
+ledgerDimensionCon += struct.valueIndex(3);
+
+DimensionDefault = AxdDimensionUtil::getDimensionAttributeValueSetId(ledgerDimensionCon);
+ledgerDimension = DimensionStorage::getDefaultAccountForMainAccountNum(mainaccount);
+ledgerDimension4 = DimensionDefaultingService::serviceCreateLedgerDimension(ledgerDimension, DimensionDefault);
+
+info(strFmt(“%1”, ledgerDimension4));
+}
