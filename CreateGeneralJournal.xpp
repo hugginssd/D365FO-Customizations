@@ -1,0 +1,142 @@
+//Author:   Mafigu Huggins
+//Email:    mafiguhuggins@gmail.com
+//Tel:      +263 782 326 160
+
+//Create general journal using X++ in D365FO
+
+class MCRLedgerJournal_Moeen extends MCRLedgerJournal
+{
+    public LedgerJournalTrans createLedgerJournalTrans(AmountCurCredit _amtCurCredit, AmountCurDebit _amtCurDebit, LedgerJournalACType _ledgerJournalACType = LedgerJournalACType::Ledger)
+    {
+        LedgerJournalTrans ledgerJournalTrans;
+
+        // Validate the input to the ledger journal trans and ensure that a ledgerjournaltable
+        // exists before creating the ledger journalTrans.
+        if (this.validateInputLedgerJourTrans(_amtCurCredit, _amtCurDebit)
+            && ledgerJournalTable.RecId != 0)
+        {
+            this.initLedgerJournalTrans(ledgerJournalTrans);
+
+            ledgerJournalTrans.JournalNum = ledgerJournalTable.JournalNum;
+            ledgerJournalTrans.AccountType = LedgerJournalACType::Ledger;
+            ledgerJournalTrans.LedgerDimension = ledgerAccount;
+            ledgerJournalTrans.OffsetAccountType = ledgerOffsetAccountType;
+            ledgerJournalTrans.OffsetLedgerDimension = ledgerOffsetAccount;
+            ledgerJournalTrans.Txt = transTxt;
+            ledgerJournalTrans.CurrencyCode = curCode;
+            ledgerJournalTrans.ExchRate = exchRate;
+            ledgerJournalTrans.Approver = approver;
+            ledgerJournalTrans.Approved = approved;
+            // Bank reconciliation specific.
+            ledgerJournalTrans.MCRCCGeneralLedgerId = MCRCCGeneralLedgerId;
+            ledgerJournalTrans.Due = dueDate;
+            ledgerJournalTrans.LineNum = lineNum;
+            ledgerJournalTrans.AccountType = ledgerAccountType;
+            ledgerJournalTrans.Voucher = voucherNum;
+            ledgerJournalTrans.PaymReference = paymReference;
+            ledgerJournalTrans.BankTransType = bankTransType;
+            ledgerJournalTrans.PaymMode = paymentMode;
+            // Add the ref paym id and the paym order id to ledger journal trans.
+            ledgerJournalTrans.MCRRefPaymID = MCRRefPaymID;
+            ledgerJournalTrans.MCRPaymOrderId = MCRPaymOrderID;
+
+            if (_amtCurCredit != 0)
+            {
+                ledgerJournalTrans.AmountCurCredit = _amtCurCredit;
+            }
+            if (_amtCurDebit != 0)
+            {
+                ledgerJournalTrans.AmountCurDebit = _amtCurDebit;
+            }
+            ledgerJournalTrans.initValue();
+            ledgerJournalTrans.defaultRow();
+
+            ledgerJournalTrans.insert();
+        }
+        else
+        {
+            throw error("@MCR35845");
+        }
+
+        return ledgerJournalTrans;
+    }
+
+    /// <summary>
+    /// Creates a new instance of the <c>MCRLedgerJournal_Daily</c> class.
+    /// </summary>
+    /// <param name="_ledgerJournalType">
+    /// The type of journal to be used in the instantiation of this class.
+    /// </param>
+    /// <param name="_journalName">
+    /// The name of the journal to be used in the instantiation of this
+    /// class; optional.
+    /// </param>
+    public void new(LedgerJournalType _ledgerJournalType, LedgerJournalNameId _journalName="")
+    {
+        super(_ledgerJournalType, _journalName);
+    }
+
+    protected boolean validateInputLedgerJourTrans(AmountCur _amtCurCredit, AmountCur _amtCurDebit)
+    {
+        boolean ret;
+
+        ret = super(_amtCurCredit, _amtCurDebit);
+        if (ret)
+        {
+            if (ledgerAccount == 0)
+            {
+                throw error(strFmt("@MCR36388"));
+            }
+        }
+        return ret;
+    }
+
+}
+
+//The step is to create the General journal using the above created class.
+ //I have written a job which creates the General journal using X++. 
+ //See the following code:
+
+class GenerateGeneralJournalJob
+{
+    /// <summary>
+    /// Runs the class with the specified arguments.
+    /// </summary>
+    /// <param name = "_args">The specified arguments.</param>
+    public static void main(Args _args)
+    {       
+        MCRLedgerJournal        journalTable;
+        LedgerJournalTable      ledgerJournalTable;
+        Counter                 recordsInserted;
+
+        ttsbegin;
+        //Creates the journal header table
+        journalTable = new MCRLedgerJournal_Moeen(LedgerJournalType::Daily);        
+        ledgerJournalTable = journalTable.createLedgerJournalTable();
+        journalTable.parmLedgerJournalTable(ledgerJournalTable);
+        journalTable.parmMCRCCGeneralLedgerId();
+        journalTable.parmCurrencyCode(CompanyInfoHelper::standardCurrency());
+
+
+        //I am creating two lines to balance out each other.
+
+        // creates a new line in general journal
+        journalTable.parmLineNum();
+        journalTable.parmLedgerAccountType(LedgerJournalACType::Vend);
+        journalTable.parmLedgerAccount(LedgerDynamicAccountHelper::getDynamicAccountFromAccountNumber("V-000001",LedgerJournalACType::Vend)); //You need to use the vendor account as per your environment's data.
+        journalTable.parmTransDate(today());
+        journalTable.parmTransTxt("txt");
+        journalTable.createLedgerJournalTrans(abs(0),abs(100),LedgerJournalACType::Vend);
+
+        // creates a new line in general journal
+        journalTable.parmLineNum();
+        journalTable.parmLedgerAccountType(LedgerJournalACType::Ledger);
+        //Using RecId of Ledger Dimension, you need to enter the RecId as per your environment's data.
+        journalTable.parmLedgerAccount(5637179073); 
+        journalTable.parmTransDate(today());
+        journalTable.parmTransTxt("txt");
+        journalTable.createLedgerJournalTrans(abs(100),abs(0),LedgerJournalACType::Ledger);
+        ttscommit;
+    }
+
+}
