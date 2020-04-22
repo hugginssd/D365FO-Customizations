@@ -1,0 +1,68 @@
+//Author:Mafigu Huggins
+//Tel:    +263 782 326 160
+//Email:  mafiguhuggins@gmail.com
+
+//Create and post a freetext invoice using invoice line template
+
+
+static void CreateFTIfromTemplate(Args _args)
+{
+    CustInvoiceTable    custInvoiceTable,custInvoiceTable1;
+    CustInvoiceTemplate custInvoiceTemplate;
+    CustInvoiceLine     custInvoiceLine;
+    CustPostInvoice     custPostInvoice;
+    CustTable           custtable;
+    CustInvoiceLineTemplate custInvoiceLineTemplate;
+ 
+    Date  invoiceDate = systemdateget();
+    Date  dueDate = systemdateget()+10;
+ 
+ 
+    try
+    {
+        custtable = Custtable::find("00001");
+        custInvoiceTemplate = CustInvoiceTemplate::findByTemplateName("Dues");
+ 
+        ttsBegin;
+        custInvoiceTable.clear();
+        custInvoiceTable.OrderAccount = custtable.AccountNum;
+ 
+        custInvoiceTable.initFromCustInvoiceTemplate(
+            custInvoiceTemplate,
+            custtable,
+            CustRecurrenceInvoiceDefaultType::InvoiceTemplate, //This can be defaulted from customer too
+            invoiceDate);
+        custInvoiceTable.DueDate = dueDate;
+        custInvoiceTable.insert();
+ 
+        // Creates a free text invoice lines by using customer free text invoice line template.
+        while select custInvoiceLineTemplate
+            where custInvoiceLineTemplate.CustInvoiceTemplate == custInvoiceTemplate.RecId
+        {
+ 
+            custInvoiceLine.clear();
+ 
+            custInvoiceLine.insertFromCustInvoiceLineTemplate(custInvoiceLineTemplate,
+                                                                custInvoiceTable,
+                                                                custtable,
+                                                                CustRecurrenceInvoiceDefaultType::InvoiceTemplate); //This can be defaulted from customer too
+        }
+ 
+        //just to be sure for proper distributions
+        SourceDocumentProcessor::submitSourceDocumentLinesForHeader(custInvoiceTable.SourceDocumentHeader);
+ 
+        //post FTI
+        Select custInvoiceTable1 where custInvoiceTable1.RecId == custInvoiceTable.RecId;
+        custPostInvoice = new CustPostInvoice(custInvoiceTable1);
+        custPostInvoice.run();
+ 
+        ttsCommit;
+ 
+        info(strFmt("Invoice generated for customer %1", custtable.AccountNum));
+    }
+    catch
+    {
+        error(strFmt("Error in generating invoice for customer %1",custtable.AccountNum));
+    }
+ 
+}
