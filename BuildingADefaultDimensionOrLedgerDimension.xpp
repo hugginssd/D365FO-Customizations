@@ -1,0 +1,50 @@
+//Author:Mafigu Huggins
+//Tel:    +263 782 326 160
+//Email:  mafiguhuggins@gmail.com
+
+//Building a DefaultDimension/LedgerDimension
+
+
+static void buildDefaultAndLedgerDimension(Args _args)
+{
+    DimensionAttributeValueSetStorage dimensionAttributeValueSetStorage;
+    DimensionAttribute dimensionAttribute;
+    DimensionAttributeValue dimensionAttributeValue;
+    DimensionDefault dimensionDefault;
+    LedgerDimensionAccount ledgerDimensionAccount;
+
+    dimensionAttributeValueSetStorage = new DimensionAttributeValueSetStorage();
+
+    // BusinessUnit
+    dimensionAttribute = DimensionAttribute::findByName('BusinessUnit');
+    if(dimensionAttribute)
+    {
+        dimensionAttributeValue = DimensionAttributeValue::findByDimensionAttributeAndValue(dimensionAttribute, '069', false, true);
+        dimensionAttributeValueSetStorage.addItem(dimensionAttributeValue);
+    }
+
+    // CostCenter
+    dimensionAttribute = DimensionAttribute::findByName('CostCenter');
+    if(dimensionAttribute)
+    {
+        dimensionAttributeValue = DimensionAttributeValue::findByDimensionAttributeAndValue(dimensionAttribute, '010', false, true);
+        dimensionAttributeValueSetStorage.addItem(dimensionAttributeValue);
+    }
+
+    // Department
+    dimensionAttribute = DimensionAttribute::findByName('Department');
+    if(dimensionAttribute)
+    {
+        dimensionAttributeValue = DimensionAttributeValue::findByDimensionAttributeAndValue(dimensionAttribute, '024', false, true);
+        dimensionAttributeValueSetStorage.addItem(dimensionAttributeValue);
+    }
+ 
+    dimensionDefault = dimensionAttributeValueSetStorage.save();
+
+    // Merge main account and source dimension values and return RecId which can be used as ledgerDimension
+    ledgerDimensionAccount = DimensionDefaultingService::serviceCreateLedgerDimension(DimensionStorage::getDefaultAccountForMainAccountNum("110110"),
+                                                                                      dimensionDefault);
+
+    info(strFmt("Default dimension recId: %1", dimensionDefault));
+    info(strFmt("DefaultDimension (Source RecId): %1 LedgerDimension (Merged RecId): %2", dimensionDefault, ledgerDimensionAccount));
+}
