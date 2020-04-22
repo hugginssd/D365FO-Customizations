@@ -1,0 +1,62 @@
+//Author:Mafigu Huggins
+//Tel:    +263 782 326 160
+//Email:  mafiguhuggins@gmail.com
+
+//Creating and posting a free text invoice by code
+
+
+static void createAndPostFreeTextInvoice(Args _args)
+{
+    CustInvoiceTable custInvoiceTable;
+    CustInvoiceLine custInvoiceLine;
+    DimensionDefault dimensionDefault; 
+    LedgerDimensionAccount ledgerDimensionAccount;     
+    CustPostInvoice custPostInvoice;
+    
+    try
+    {
+        ttsBegin;        
+        
+        // Create header
+        custInvoiceTable.clear();
+        custInvoiceTable.initValue();
+        custInvoiceTable.OrderAccount = "US-004";
+        custInvoiceTable.modifiedField(
+            fieldNum(CustInvoiceTable, OrderAccount));
+        custInvoiceTable.insert();
+        
+        // Create line
+        custInvoiceLine.clear();
+        custInvoiceLine.initValue();
+        custInvoiceLine.ParentRecId = custInvoiceTable.RecId;
+        custInvoiceLine.initFromCustInvoiceTable(custInvoiceTable);
+        custInvoiceLine.Description = "Test";
+        custInvoiceLine.Quantity = 10;
+        custInvoiceLine.modifiedField(
+            fieldNum(CustInvoiceLine, Quantity));
+        custInvoiceLine.UnitPrice = 200;
+        custInvoiceLine.modifiedField(
+            fieldNum(CustInvoiceLine, UnitPrice));
+        
+        ledgerDimensionAccount = 
+        DimensionDefaultingService::serviceCreateLedgerDimension(
+            DimensionStorage::getDefaultAccountForMainAccountNum(
+                "110110"), 
+                dimensionDefault); 
+        
+        custInvoiceLine.LedgerDimension = ledgerDimensionAccount;
+        custInvoiceLine.modifiedField(
+            fieldNum(CustInvoiceLine, LedgerDimension));
+        custInvoiceLine.insert();
+        
+        // Post
+        custPostInvoice = new CustPostInvoice(custInvoiceTable);
+        custPostInvoice.run();
+        
+        ttsCommit;
+    }
+    catch
+    {
+        throw error(error::wrongUseOfFunction(funcName()));
+    }
+}
