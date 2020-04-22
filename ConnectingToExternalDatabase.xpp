@@ -4,75 +4,76 @@
 
 //If we need to interface any external database with Dynamics AX, we can achieve this task by using ADO and its AX available classes:
 //CCADOConnection, CCADORecordSet, CCADOFields, CCADOField and CCADOCommand. Here an example:
-
-
-static void ADOTestJob(Args _args)
+class ConnectToExternalDatabase
 {
-    CCADOConnection ccConnection;
-    CCADOCommand ccCommand;
-    CCADORecordSet ccRecordset;
-    CCADOFields ccFields;
-    str st;
-    str data1;
-    int data2;
-    ;
 
-    ccConnection = new CCADOConnection();
-
-    // Setting the connection string
-    ccConnection.connectionString(StrFmt('Provider=SQLOLEDB.1;Persist Security Info=False;User ID=%3;Password=%4;Initial Catalog=%2;Data Source=%1'
-    , 'servername' // Server's IP or name
-    , 'database' // Database or catalog
-    , 'user' // Username
-    , 'pwd' // Password
-    ));
-
-    // Open the connection
-    ccConnection.open();
-
-    // Preparing the query
-    st = "SELECT * FROM mytable";
-
-    // Recordset object creation
-    ccRecordset = new CCADORecordSet();
-
-    // Executing the query
-    ccRecordset.open( st, ccConnection );
-
-    // Reading data
-    while (!ccRecordset.EOF())
+    static void ADOTestJob(Args _args)
     {
-        ccFields = ccRecordset.fields();
+        CCADOConnection ccConnection;
+        CCADOCommand ccCommand;
+        CCADORecordSet ccRecordset;
+        CCADOFields ccFields;
+        str st;
+        str data1;
+        int data2;
+        ;
 
-        // We can access fields either by name or by Index
-        data1 = ccFields.itemName("FIELD1").value();
-        data2 = ccFields.itemIdx(1).value();
+        ccConnection = new CCADOConnection();
 
-        info(strfmt("Data %1, %2", data1, data2));
+        // Setting the connection string
+        ccConnection.connectionString(StrFmt('Provider=SQLOLEDB.1;Persist Security Info=False;User ID=%3;Password=%4;Initial Catalog=%2;Data Source=%1'
+        , 'servername' // Server's IP or name
+        , 'database' // Database or catalog
+        , 'user' // Username
+        , 'pwd' // Password
+        ));
 
-        // Read next record
-        ccRecordset.moveNext();
-    }
+        // Open the connection
+        ccConnection.open();
 
-    // Closing the connection
-    ccRecordset.close();
-    ccConnection.close();
-    }
+        // Preparing the query
+        st = "SELECT * FROM mytable";
 
-    //If we need to execute something (an UPDATE, DELETE, etc.), we can use the CCADOCommand:
+        // Recordset object creation
+        ccRecordset = new CCADORecordSet();
+
+        // Executing the query
+        ccRecordset.open( st, ccConnection );
+
+        // Reading data
+        while (!ccRecordset.EOF())
+        {
+            ccFields = ccRecordset.fields();
+
+            // We can access fields either by name or by Index
+            data1 = ccFields.itemName("FIELD1").value();
+            data2 = ccFields.itemIdx(1).value();
+
+            info(strfmt("Data %1, %2", data1, data2));
+
+            // Read next record
+            ccRecordset.moveNext();
+        }
+
+        // Closing the connection
+        ccRecordset.close();
+        ccConnection.close();
+        }
+
+        //If we need to execute something (an UPDATE, DELETE, etc.), we can use the CCADOCommand:
 
 
-    void ExecuteSQLExt(str sql)
-    {
-        // Creating the ADO Command object
-        ccCommand = new CCADOCommand();
+        void ExecuteSQLExt(str sql)
+        {
+            // Creating the ADO Command object
+            ccCommand = new CCADOCommand();
 
-        // Associate it with an existing opened connection
-        ccCommand.activeConnection(ccConnection);
+            // Associate it with an existing opened connection
+            ccCommand.activeConnection(ccConnection);
 
-        // Executing the command
-        ccCommand.commandText(SQL);
+            // Executing the command
+            ccCommand.commandText(SQL);
 
-        ccCommand.execute();
-    }
+            ccCommand.execute();
+        }
 }
