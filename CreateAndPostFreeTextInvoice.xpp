@@ -1,0 +1,162 @@
+//Author:Mafigu Huggins
+//Tel:    +263 782 326 160
+//Email:  mafiguhuggins@gmail.com
+
+//Create and post a freetext invoice
+
+public void xtest()
+{
+    Dialog                dialog;
+    DialogField     dlgCustAcc;
+    DialogGroup   dialogPeriodLengthGroup, dialogPeriodLengthGroup1;
+    DialogField     dlgLedgerAcc;
+;
+
+    dialog                                             = new Dialog("Free-Text Invoice");
+    dialogPeriodLengthGroup1  = dialog.addGroup(‘Cust Table’);
+    dlgCustAcc                                   = dialog.addField(typeid(CustAccount));
+    dialogPeriodLengthGroup    = dialog.addGroup(‘Ledger Table’);
+    dlgLedgerAcc                              = dialog.addField(typeid(LedgerAccount));
+
+ 
+
+   
+
+    if(dialog.run())
+
+    {
+
+        if(dlgCustAcc.value() && dlgLedgerAcc.value() != ”)
+
+            FreeTxtInvoiceCreatePost::main(dlgCustAcc.value(), dlgLedgerAcc.value());
+
+        else
+
+             throw error(strfmt("Either CustAccount or LedgerAccount info is missing."));
+
+    }
+
+ }
+
+ 
+
+/// <summary>
+
+///     The <c>Job_FreeTxtInvoice</c> class is implemented to create/post <c>Free Text Invoice</c>.
+
+/// </summary>
+
+class FreeTxtInvoiceCreatePost
+
+{
+
+}
+
+ 
+
+static void main(CustAccount _custAccount, LedgerAccount _ledgerAccount)
+
+{
+
+    CustInvoiceTable    custInvoiceTable;
+
+    CustInvoiceLine      custInvoiceLine;
+
+    CustTable               custTable;
+
+    LedgerTable           ledgerTable;
+
+    CustPostInvoice     custPostInvoice;
+
+    LineNum                lineNum;
+
+    int                          i;
+
+    ;
+
+ 
+
+    /// <summary>
+
+    ///     The <c>CustInvoiceTable</c> logic is implemented to create single <c>Header</c>.
+
+    /// </summary>
+
+    ttsbegin;
+
+    custTable = CustTable::find(_custAccount);
+
+    custInvoiceTable.initFromCustTable(custTable);
+
+    custInvoiceTable.insert();
+
+    ttscommit;
+
+ 
+
+    /// <summary>
+
+    ///     The <c>CustInvoiceLine</c> logic is implemented to create multiple <c>Invoice Lines</c>.
+
+    /// </summary>
+
+    for(i=1; i<=100; i++)
+
+    {
+
+        ttsbegin;
+
+        ledgerTable = LedgerTable::find(_ledgerAccount);
+
+        custInvoiceLine.clear();
+
+        custInvoiceLine.initValue();
+
+        custInvoiceLine.LedgerAccount = ledgerTable.AccountNum;
+
+        custInvoiceLine.initFromCustInvoiceTable(custInvoiceTable);
+
+        custInvoiceLine.AmountCur = 10.00;
+
+        custInvoiceLine.Description = ‘FreeTxIv’ + int2str(i);
+        custInvoiceLine.TaxItemGroup = ‘full’;
+
+        custInvoiceLine.ParentRecId = custInvoiceTable.RecId;
+
+ 
+
+        //LINE NUM LOGIC.
+
+        if(!lineNum)
+
+        {
+
+            lineNum = CustInvoiceLine::lastLineNum(custInvoiceLine.ParentRecId);
+
+        }
+
+ 
+
+        lineNum += 1;
+
+        custInvoiceLine.LineNum = lineNum;
+
+        custInvoiceLine.insert();
+
+        ttscommit;
+
+    }
+
+ 
+
+    /// <summary>
+
+    ///     The <c>custPostInvoice</c> class is called for posting <c>Free-TextInvoice.</c> records.
+
+    /// </summary>
+
+    custPostInvoice = new CustPostInvoice(custInvoiceTable);
+
+    custPostInvoice.run();
+
+}
