@@ -1,0 +1,71 @@
+//Author:Mafigu Huggins
+//Tel:    +263 782 326 160
+//Email:  mafiguhuggins@gmail.com
+
+//I came across a requirement where client asked us to display actual Invoice Id before actually 
+//posting it in the system(They needed it as per their business, they send Invoices to Customers 
+//before posting so if any amendment has to be made, it can be made directly to Order/Free text 
+//invoice and post it afterwards).
+
+//Luckily, not much change required for this.
+
+//Navigate to class CUSTPOSTINVOICE and add new method as below
+
+// method to get/set Invoice and voucher
+private container getNumAndVoucher(NumberSeq _numberSeq)
+{
+   container ret;
+   if (custInvoiceTable.InvoiceID != '')
+   {
+       _numberSeq.parmNumberSequenceCode('');
+       _numberSeq.parmNumberSequenceId(0);
+       ret = [custInvoiceTable.InvoiceID, custInvoiceTable.Voucher];
+   }
+   else
+   {
+       ret = _numberSeq.numAndVoucher();
+   }
+   return ret;
+}
+
+// Then, open RUNINTERNAL method of same class for editing and scroll down to the line where it says
+
+// numberSeq = this.allocateNumAndVoucher();
+
+// Then copy and comment the above line and move to next if/else condition
+
+//  if (custInvoiceTable.InvoiceId
+//                 && RetailMCRChannelTable::findForCurrentUser().mcrEnableOrderCompletion)
+
+// and modify else part of this as shown below
+
+//changed, moved from line 164
+     numberSeq = this.allocateNumAndVoucher();//paste commented line of code
+     if (countryRegion_LTLV)
+     {
+          [invoiceId, voucher] = this.getNumAndVoucher_W(numberSeq);
+          if (! CustInvoiceJour::checkDuplicateNum_W(invoiceId, '', custInvoiceTable.InvoiceDate))
+          {
+              throw error("@SYS25904");
+          }
+    }
+    else
+    {
+         //new code
+         [invoiceId, voucher] = this.getNumAndVoucher(numberSeq);
+    }
+
+//After this, include a below piece of code(modify as per the calling place) at required place to save invoiced and voucher for posting.
+
+// to update invoice and voucher
+    Select forUpdate custInvoiceTable1 where custInvoiceTable1.RecId == custInvoiceTable.RecId;
+    custPostInvoice = new CustPostInvoice(custInvoiceTable1);
+    numberSeq = custPostInvoice.allocateNumAndVoucher();
+ 
+    [invoice,voucher] = numberSeq.numAndVoucher();
+    custInvoiceTable1.InvoiceId = invoice;
+    custInvoiceTable1.Voucher = voucher;
+    custInvoiceTable1.update();
+
+
+//Now you'll have actual invoice id in Invoice field of Free text invoice table(CustInvoiceTable) for further reporting and posting.
