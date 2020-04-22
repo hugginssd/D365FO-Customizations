@@ -1,0 +1,115 @@
+//Author:Mafigu Huggins
+//Tel:    +263 782 326 160
+//Email:  mafiguhuggins@gmail.com
+
+//Free text invoice using X++ in AX 2012
+
+    CustInvoiceJour     custinvoicejour;
+    CustInvoiceTrans    custinvoicetrans;    
+    CustInvoiceTable    custInvoiceTable,custInvoiceTable1;
+    CustInvoiceLine     custInvoiceLine,custInvoiceLine1;
+    CustPostInvoice     custPostInvoice;
+    CustTable       custtable;
+    SalesLine       salesLine;
+    SalesLine_IN    salesLinein;
+    CustInvoiceLineTaxExtensionIN custInvoiceLineTaxExtensionIN;
+ 
+    container   offsetDimensions;
+    LineNum     lineNum;
+    Query   q;
+    QueryBuildDataSource    qbds;
+    QueryRun    qr;
+ 
+    q = new Query();
+ 
+    qbds = q.addDataSource(tableNum(CustInvoiceJour));
+    qbds.addRange(fieldNum(CustInvoiceJour, Invoiceaccount)).value("Cust1");
+    qbds.addRange(fieldNum(CustInvoiceJour, InvoiceId)).value("TestInvoice1");
+    qbds.addRange(fieldNum(CustInvoiceJour, InvoiceId)).value("TestInvoice2");
+ 
+    qr = new QueryRun(q);
+ 
+    while(qr.next())
+    {
+        custinvoicejour = qr.get(tableNum(CustInvoiceJour));
+         //info(strFmt("%1, %2",custinvoicejour.InvoiceAccount, custinvoicejour.InvoiceDate));
+ 
+        ttsBegin;
+ 
+        custtable = CustTable::find(custinvoicejour.InvoiceAccount);
+        custInvoiceTable.clear();
+        custInvoiceTable.initFromCustTable(custtable);
+        //custInvoiceTable.InvoiceDate = custinvoicejour.InvoiceDate;
+ 
+        custInvoiceTable.insert();
+ 
+        lineNum = 0;
+        while select custinvoicetrans       
+            where custinvoicetrans.InvoiceId == custinvoicejour.InvoiceId
+            && custinvoicetrans.InvoiceDate == custinvoicejour.InvoiceDate
+        {
+            custInvoiceLine.clear();
+            custInvoiceLine.initValue();
+             
+            //setup main account as required 
+            offsetDimensions = ["999999","999999", 0, "", ""]; // you can set a Main Account with multiple financial dimensions
+ 
+            custInvoiceLine.LedgerDimension = AxdDimensionUtil::getLedgerAccountId(offsetDimensions);
+            custInvoiceLine.initFromCustInvoiceTable(custInvoiceTable);
+            custInvoiceLine.ItemId = "001234"; //custom field     
+ 
+            
+            custInvoiceLine.Quantity = custinvoicetrans.Qty;
+            custInvoiceLine.UnitPrice = 2.0 ;
+            custInvoiceLine.modifiedField(fieldNum(CustInvoiceLine, UnitPrice));
+            custInvoiceLine.Description = custinvoicetrans.itemName();
+ 
+            //to get HSN code used in original invoice
+            select salesLine
+                where salesLine.SalesId == custinvoicetrans.SalesId
+                && salesLine.ItemId == custinvoicetrans.ItemId;
+ 
+            select salesLinein
+                where salesLinein.SalesLine == salesLine.RecId;
+ 
+            //Instead of HSNCode, you need to specify Taxgroup and Itemtaxgroup in case of other localizations
+            custInvoiceLine.HSNCodeTable_IN = salesLinein.HSNCodeTable;
+ 
+            custInvoiceLine.ParentRecId = custInvoiceTable.RecId;
+            if(!lineNum)
+            {
+                lineNum = CustInvoiceLine::lastLineNum_W(custInvoiceLine.ParentRecId);
+            }
+ 
+            lineNum += 1;
+            custInvoiceLine.LineNum = lineNum;
+            custInvoiceLine.InvoiceTxt = custinvoicetrans.InvoiceId+"\n"+date2StrXpp(custinvoicetrans.InvoiceDate);//change it as per need
+ 
+            custInvoiceLine.insert();
+             
+            //Specific to Indian localization, not required for other localizations
+            custInvoiceLineTaxExtensionIN.CustInvoiceLine = custInvoiceLine.RecId;
+            custInvoiceLineTaxExtensionIN.TaxInformation_IN = TaxInformation_IN::findDefaultbyLocation(DirPartyTable::find(CompanyInfo::findDataArea(curext()).PartyNumber).PrimaryAddressLocation).RecId;
+            custInvoiceLineTaxExtensionIN.initValue();
+            custInvoiceLineTaxExtensionIN.insert();
+ 
+        }
+ 
+        //Post free text invoice
+        if(lineNum)
+        {
+            Select custInvoiceTable1 where custInvoiceTable1.RecId == custInvoiceTable.RecId;
+ 
+            custPostInvoice = new CustPostInvoice(custInvoiceTable1);
+            custPostInvoice.run();
+ 
+            ttsCommit;
+ 
+        }
+        else
+        {
+            ttsAbort;
+        }
+ 
+    }
+}
