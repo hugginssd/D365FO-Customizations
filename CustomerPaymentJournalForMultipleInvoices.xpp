@@ -1,0 +1,82 @@
+//Author:Mafigu Huggins
+//Tel:    +263 782 326 160
+//Email:  mafiguhuggins@gmail.com
+
+//Create customer payment journal for multiple invoices via x++
+
+
+void clicked()
+{
+    CustInvoiceTable        custInvoiceTable_loc;    
+    SysOperationProgress    progressBar = new SysOperationProgress();
+    Counter                 progressCount,progressTotal;
+    Ledgerjournalname       ledgerjournalname;
+    LedgerjournalTable      LedgerjournalTable;
+    LedgerjournalTrans      LedgerjournalTrans;
+    CustTable               custtable_loc;
+    NumberSeq               numberSeq;
+    CustParameters          custParametersExt;
+    #avifiles
+    super();
+ 
+        for (custInvoiceTable_loc = getFirstSelection(CustInvoiceTable_ds);custInvoiceTable_loc;custInvoiceTable_loc = CustInvoiceTable_ds.getNext())
+        {//this is just for total count
+            if (custInvoiceTable_loc.Posted == NoYes::Yes)
+            {
+                progressTotal++;
+            }
+        }
+        progressBar.setCaption(strfmt("Creating payment lines"));
+        progressBar.setAnimation(#aviUpdate);
+        progressBar.setTotal(progressTotal);
+        progressCount = 1;
+ 
+        select ledgerjournalname where ledgerjournalname.JournalName == custParametersExt.CustPaymJournalName;
+ 
+        ttsBegin;
+        LedgerjournalTable.JournalName = ledgerjournalname.JournalName;
+        LedgerjournalTable.initFromLedgerJournalName();
+        LedgerjournalTable.JournalNum  = JournalTableData::newTable(LedgerjournalTable).nextJournalId();
+        LedgerjournalTable.insert();
+ 
+        for (custInvoiceTable_loc = getFirstSelection(CustInvoiceTable_ds);custInvoiceTable_loc;custInvoiceTable_loc = CustInvoiceTable_ds.getNext())
+        {
+            progressBar.setText(strfmt("Creating payment for invoice %1,total payment created",custInvoiceTable_loc.InvoiceId,progressCount));
+            progressBar.setCount(progressCount);
+ 
+            if (custInvoiceTable_loc.Posted == NoYes::Yes)
+            {
+               custtable_loc   = CustTable::find(custInvoiceTable_loc.InvoiceAccount);
+               numberSeq                               =   NumberSeq::newGetVoucherFromId((ledgerjournalname.NumberSequenceTable));
+               LedgerjournalTrans.Voucher              =   numberSeq.voucher();
+               LedgerjournalTrans.JournalNum           =   LedgerjournalTable.JournalNum;
+               LedgerjournalTrans.AccountType          =   LedgerJournalACType::Cust;
+               LedgerjournalTrans.Company              =   curext();
+               LedgerjournalTrans.parmAccount(custtable_loc.AccountNum,LedgerjournalTrans.AccountType);
+               LedgerjournalTrans.initFromCustTable(custtable_loc);
+               LedgerjournalTrans.TransDate            =   systemDateGet();
+               LedgerjournalTrans.Invoice              =   custInvoiceTable_loc.InvoiceId; //Marked Invoice can also be selected if required for settlement
+               LedgerjournalTrans.ExchRate             =   Currency::exchRate(LedgerjournalTrans.CurrencyCode);
+ 
+               LedgerjournalTrans.Txt                  =   strFmt('Payment for Invoice %1',LedgerjournalTrans.Invoice);
+     
+               LedgerjournalTrans.OffsetAccountType    =   LedgerJournalACType::Bank;//Select as required;
+               LedgerJournalTrans.parmOffsetAccount(custParametersExt.BankAccountID,LedgerjournalTrans.OffsetAccountType);
+ 
+               LedgerjournalTrans.DefaultDimension         =   custtable_loc.DefaultDimension;
+               LedgerjournalTrans.OffsetDefaultDimension   =   custtable_loc.DefaultDimension;
+               LedgerjournalTrans.TransactionType          =   LedgerTransType::Payment;
+               LedgerjournalTrans.InstallmentNum   = installmentNum;
+               LedgerjournalTrans.PaymMode         = custPaymMode;
+    
+               LedgerjournalTrans.AmountCurCredit  =   custInvoiceTable_loc.InvoiceAmount()
+     
+               LedgerjournalTrans.insert();
+            }
+ 
+            progressCount++;
+        }
+        ttscommit;
+ 
+    CustInvoiceTable_ds.reread();
+}
