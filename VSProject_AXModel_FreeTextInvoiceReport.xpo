@@ -1,0 +1,93 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: VPA
+
+; Microsoft Dynamics AX VISUALSTUDIOPROJECT : FreeTextInvoiceReport unloaded
+; --------------------------------------------------------------------------------
+  VERSION 1
+  
+  VISUALSTUDIOPROJECT #FreeTextInvoiceReport
+    PROPERTIES
+      Name                #FreeTextInvoiceReport
+      ProjectGUID         #{C91EB8D8-8C15-443D-8B37-483E2AFE40D1}
+      ProjectTypeGUID     #{AA631830-3AD7-4631-8CF6-443A09BF983B}
+      VisualStudioProjectFile   #FreeTextInvoiceReport.dynamicsproj
+      Origin              #{4836FDCF-56C3-442E-ACEF-01E780E6D164}
+    ENDPROPERTIES
+    
+    REFERENCEDPROJECTS
+      #
+    ENDREFERENCEDPROJECTS
+    
+    VISUALSTUDIOPROJECTFOLDER #Project Content
+      PROPERTIES
+        Name                #Project Content
+      ENDPROPERTIES
+      
+      VISUALSTUDIOPROJECTFILE #FreeTextInvoiceReport.dynamicsproj
+        PROPERTIES
+          Name                #FreeTextInvoiceReport.dynamicsproj
+        ENDPROPERTIES
+        
+        SOURCE 2328
+#﻿<?xml version="1.0" encoding="utf-8"?>
+#<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+#  <PropertyGroup>
+#    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+#    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+#    <ProductVersion>6.0.452.0</ProductVersion>
+#    <SchemaVersion>2.0</SchemaVersion>
+#    <ProjectGuid>{c91eb8d8-8c15-443d-8b37-483e2afe40d1}</ProjectGuid>
+#    <Name>FreeTextInvoiceReport</Name>
+#    <BaseAssemblyName>FreeTextInvoiceReport</BaseAssemblyName>
+#    <!-- Application property page properties -->
+#    <OutputType>Dynamics Reporting Library</OutputType>
+#    <!-- AssemblyInfo properties -->
+#    <AssemblyTitle>FreeTextInvoiceReport</AssemblyTitle>
+#    <AssemblyCompany>MSIT</AssemblyCompany>
+#    <AssemblyProduct>FreeTextInvoiceReport</AssemblyProduct>
+#    <AssemblyCopyright>Copyright © MSIT 2010</AssemblyCopyright>
+#    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+#    <FileAlignment>512</FileAlignment>
+#    <OutputPath>bin\Debug\</OutputPath>
+#    <RootNamespace>FreeTextInvoiceReport</RootNamespace>
+#    <DebugExePath>C:\Program Files\Microsoft Dynamics AX\6.0\client\Bin\Ax32.exe</DebugExePath>
+#    <ProjectTypeGuids>{BF6F8E12-879D-49E7-ADF0-5503146B24B8};{aa631830-3ad7-4631-8cf6-443a09bf983b}</ProjectTypeGuids>
+#    <DeployToServer>No</DeployToServer>
+#    <DeployToClient>No</DeployToClient>
+#    <DeployToEP>No</DeployToEP>
+#    <DeployToSSRS>Yes</DeployToSSRS>
+#    <DebugTarget>None</DebugTarget>
+#    <StartupElement />
+#  </PropertyGroup>
+#  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+#    <OutputPath>bin\Debug\</OutputPath>
+#  </PropertyGroup>
+#  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+#    <OutputPath>bin\Release\</OutputPath>
+#  </PropertyGroup>
+#  <Import Project="$(MSBuildExtensionsPath)\Microsoft\DynamicsTools\Microsoft.Dynamics.Framework.Design.Reporting.Modeling.targets" />
+#  <ItemGroup>
+#    <Compile Include="\SSRS Reports\Reports\FreeTextInvoice">
+#      <Virtual>true</Virtual>
+#    </Compile>
+#  </ItemGroup>
+#  <Import Project="$(MSBuildExtensionsPath)\Microsoft\DynamicsTools\Microsoft.Dynamics.Framework.Design.InteractionProject.targets" />
+#</Project>
+        ENDSOURCE
+      ENDVISUALSTUDIOPROJECTFILE
+      
+    ENDVISUALSTUDIOPROJECTFOLDER
+    
+    VISUALSTUDIOPROJECTFOLDER #Project Output
+      PROPERTIES
+        Name                #Project Output
+      ENDPROPERTIES
+      
+    ENDVISUALSTUDIOPROJECTFOLDER
+    
+  ENDVISUALSTUDIOPROJECT
+  
+
+***Element: END
