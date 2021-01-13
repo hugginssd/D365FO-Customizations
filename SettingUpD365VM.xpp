@@ -1,0 +1,14 @@
+select @@SERVERNAME
+
+
+Select serverproperty('ServerName')
+
+
+sp_dropserver 'MININT-S45GUTR'; --Old Name
+
+GO
+sp_addserver 'D365QDEVMAIN',LOCAL; --New Name
+
+
+GO
+

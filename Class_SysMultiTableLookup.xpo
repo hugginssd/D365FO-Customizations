@@ -1,0 +1,1343 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Microsoft Business Solutions-Axapta Class: SysMultiTableLookup unloaded at Monday 9/22/2008
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #SysMultiTableLookup
+    PROPERTIES
+      Name                #SysMultiTableLookup
+      Extends             #
+      RunOn               #Client
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #addFilter
+        #protected void addFilter(FormRun formRun)
+        #{
+        #    FormDataSource                  formDataSource = formRun.dataSource();
+        #    QueryBuildRange                 queryBuildRange;
+        #    FormStringControl               callingStringControl;
+        #    FormStringControl               selectControl;
+        #    fieldId                         selectFieldId;
+        #    str                             callingValue;
+        #    ;
+        #    if (!callingControl || !callingControl.hasChanged())
+        #        return;
+        #
+        #    switch (callingControl.handle())
+        #    {
+        #        case classnum(FormStringControl):
+        #            callingStringControl = callingControl;
+        #            if (controlIdx && callingStringControl.text())
+        #            {
+        #                selectControl = formRun.control(controlIdx);
+        #                selectFieldId = selectControl.dataField();
+        #                if (selectFieldId)
+        #                {
+        #                    callingValue = callingStringControl.text();
+        #                    if (strfind(callingValue, '*', 1, 999))
+        #                    {
+        #                        queryBuildRange = formDataSource.query().dataSourceNo(1).addRange(selectFieldId);
+        #                        queryBuildRange.value(callingValue);
+        #                    }
+        #                }
+        #            }
+        #            break;
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #addLookupControl
+        #void addLookupControl(int _dataSourceNo, fieldId _fieldId, boolean _returnItem, str _methodName, str _label)
+        #{
+        #    lookupItems += [[_dataSourceNo, _fieldId, _returnItem, _methodName]];
+        #    if (_label)
+        #        this.setLabel(_label);
+        #}
+      ENDSOURCE
+      SOURCE #addLookupField
+        #void addLookupField(fieldId _fieldId, int _dataSourceNo = 1, boolean _returnItem = false, str _label = '')
+        #{
+        #    ;
+        #    if (_dataSourceNo > query.dataSourceCount())
+        #        throw error(Error::wrongUseOfFunction(funcName()));
+        #
+        #    this.addLookupControl(_dataSourceNo, _fieldId, _returnItem, '', _label);
+        #}
+      ENDSOURCE
+      SOURCE #addLookupMethod
+        #// this method should not be called before the actually lookup column has been added
+        #void addLookupMethod(str _method, int _dataSourceNo = 1, str _label)
+        #{
+        #    ;
+        #    this.addLookupControl(_dataSourceNo, 0, false, _method, _label);
+        #}
+      ENDSOURCE
+      SOURCE #addMethodControl
+        #protected FormBuildControl addMethodControl(FormBuildGridControl _formBuildGridControl, FormBuildDataSource _formBuildDataSource, str _method, int _labelIdx)
+        #{
+        #    DictMethod      dictMethod = new DictMethod(UtilElementType::TableInstanceMethod, _formBuildDataSource.table(), _method);
+        #    int             extendedTypeId;
+        #    int             returnId;
+        #    Types           returnType;
+        #    SysDictType     sysDictType;
+        #
+        #
+        #    FormBuildControl addStandardControl(FormControlType _formControlType)
+        #    {
+        #        Object obj;
+        #        FormBuildControl ret;
+        #        ;
+        #        obj = _formBuildGridControl.addControl(_formControlType, _method);
+        #        obj.dataSource(_formBuildDataSource.id());
+        #        obj.dataMethod(_method);
+        #        if (labels[_labelIdx])
+        #        {
+        #            obj.label(labels[_labelIdx]);
+        #        }
+        #
+        #        ret = obj;
+        #        return ret;
+        #    }
+        #
+        #    ;
+        #    if (!dictMethod)
+        #        return null;
+        #
+        #    returnType = dictMethod.returnType();
+        #    returnId = dictMethod.returnId();
+        #    if (returnType == Types::UserType) // EDT - find base type of EDT
+        #    {
+        #        extendedTypeId = returnId;
+        #        if (!extendedTypeId)
+        #            return null;
+        #
+        #        sysDictType = new SysDictType(extendedTypeId);
+        #        returnType = sysDictType.baseType();
+        #    }
+        #    if (returnType == Types::Enum)
+        #    {
+        #        if (returnId == enumnum(NoYes) ||
+        #           (sysDictType && sysDictType.enumId() == enumnum(NoYes)) ||
+        #           (returnId == enumNum(Boolean))) //Boolean should also be displayed as a checkbox
+        #        {
+        #            extendedTypeId = extendedTypeNum(NoYesId); // Simulate NoYesId to have it shown as checkbox
+        #        }
+        #    }
+        #    else if (returnType == Types::Integer)
+        #    {
+        #        if (sysDictType && SysMultiTableLookup::isEqualOrExtending(sysDictType.id(), extendedTypeNum(timeOfDay)))
+        #        {
+        #            extendedTypeId = extendedTypeNum(timeOfDay);
+        #        }
+        #    }
+        #
+        #    return addStandardControl(this.types2ControlType(returnType, extendedTypeId));
+        #}
+      ENDSOURCE
+      SOURCE #buildGrid
+        #protected FormBuildGridControl buildGrid(FormBuildGridControl _formBuildGridControl, Form _form)
+        #{
+        #    FormBuildDataSource             formBuildDataSource;
+        #    FormBuildControl                formBuildControl;
+        #    Object                          obj;
+        #    boolean                         returnItem;
+        #    str                             method;
+        #    int                             fieldId;
+        #    int                             i;
+        #    boolean                         lookupFieldSet = false;
+        #    int                             dataSourceNo;
+        #    ;
+        #
+        #    for (i = 1; i <= conlen(lookupItems); i++)
+        #    {
+        #        [dataSourceNo, fieldId, returnItem, method] = conpeek(lookupItems, i);
+        #
+        #        if (!method)
+        #        {
+        #            formBuildControl = _formBuildGridControl.addDataField(_form.dataSource(dataSourceNo).id(), fieldId);
+        #
+        #            if (labels[i])
+        #            {
+        #                obj = formBuildControl;
+        #                obj.label(labels[i]);
+        #            }
+        #        }
+        #        else
+        #        {
+        #            formBuildControl = this.addMethodControl(_formBuildGridControl, _form.dataSource(dataSourceNo), method, i);
+        #        }
+        #
+        #        if(!formBuildControl)
+        #            throw error("@SYS72176");
+        #
+        #        if (!lookupFieldSet || returnItem)
+        #        {
+        #            controlIdx = formBuildControl.id();
+        #            lookupField = fieldId;
+        #            lookupFieldSet = true;
+        #        }
+        #    }
+        #
+        #    return _formBuildGridControl;
+        #}
+      ENDSOURCE
+      SOURCE #buildSelectionList
+        #protected void buildSelectionList(Query _query)
+        #{
+        #    boolean                 returnItem;
+        #    str                     method;
+        #    int                     fieldId;
+        #    int                     i;
+        #    int                     dataSourceNo;
+        #
+        #    SelectionField  fieldKind()
+        #    {
+        #        int                 j;
+        #        QueryBuildFieldList qbfl;
+        #        ;
+        #
+        #        qbfl = _query.dataSourceNo(dataSourceNo).fields();
+        #        for (j = 1; j <= qbfl.fieldCount(); j++)
+        #        {
+        #            if (qbfl.field(j) == fieldId)
+        #            {
+        #                return qbfl.fieldKind(j);
+        #            }
+        #        }
+        #        return SelectionField::Database;
+        #    }
+        #    ;
+        #
+        #    // Test that all are fields (no methods)
+        #    // If at least 1 method is present, it is too risky to build a selection field list
+        #    for (i = 1; i <= conlen(lookupItems); i++)
+        #    {
+        #        [dataSourceNo, fieldId, returnItem, method] = conpeek(lookupItems, i);
+        #
+        #        if (method)
+        #        {
+        #            return;
+        #        }
+        #    }
+        #
+        #    for (i = 1; i <= conlen(lookupItems); i++)
+        #    {
+        #        [dataSourceNo, fieldId, returnItem, method] = conpeek(lookupItems, i);
+        #
+        #        _query.dataSourceNo(dataSourceNo).addSelectionField(fieldId, fieldKind());
+        #    }
+        #}
+        #
+      ENDSOURCE
+      SOURCE #classDeclaration
+        #// This is a framework class.
+        #class SysMultiTableLookup
+        #{
+        #    container           lookupItems;
+        #    Query               query;
+        #    int                 controlIdx;
+        #    Common              tmpBuffer;
+        #    str                 labels[];
+        #    FormControl         callingControl;
+        #    fieldId             lookupField;
+        #    boolean             useLookupValue;
+        #}
+      ENDSOURCE
+      SOURCE #formRun
+        #protected FormRun formRun()
+        #{
+        #    Form                            form = new Form();
+        #    FormRun                         formRun;
+        #    FormBuildDesign                 formBuildDesign;
+        #    FormBuildDataSource             formBuildDataSource;
+        #    FormDataSource                  formDataSource;
+        #    FormBuildGridControl            formBuildGridControl;
+        #    FormGridControl                 formGridControl;
+        #    FormStringControl               callingStringControl;
+        #    QueryBuildDataSource            queryBuildDataSource;
+        #    Args                            args;
+        #    int                             idx;
+        #    int                             i;
+        #    ;
+        #
+        #    form.name(identifierstr(TemporaryFormName));
+        #
+        #    for (i = 1; i <= query.dataSourceCount(); i++)
+        #    {
+        #        queryBuildDataSource = query.dataSourceNo(i);
+        #        formBuildDataSource = form.addDataSource(queryBuildDataSource.name());
+        #        formBuildDataSource.table(queryBuildDataSource.table());
+        #        formBuildDataSource.autoQuery(true);
+        #
+        #        if (queryBuildDataSource.embedded()) //joined() or level() > 1
+        #        {
+        #            formBuildDataSource.linkType(this.joinMode2LinkType(queryBuildDataSource.joinMode()));
+        #            formBuildDataSource.joinSource(queryBuildDataSource.parentDataSource().name());
+        #        }
+        #
+        #        formBuildDataSource.allowCreate(false);
+        #        formBuildDataSource.allowDelete(false);
+        #        formBuildDataSource.allowEdit(false);
+        #        formBuildDataSource.allowCheck(false);
+        #    }
+        #
+        #    formBuildDesign = form.addDesign('Design');
+        #    formBuildDesign.mode(FormMode::Watch);
+        #    formBuildDesign.frame(FormFrame::Border);
+        #    formBuildDesign.hideIfEmpty(false);
+        #    formBuildDesign.hideToolbar(false);
+        #    formBuildDesign.top(15);
+        #    formBuildDesign.topMargin(2);
+        #    formBuildDesign.left(15);
+        #    formBuildDesign.leftMargin(0);
+        #    formBuildDesign.rightMargin(0);
+        #    formBuildDesign.bottomMargin(0);
+        #
+        #    formBuildGridControl = formBuildDesign.addControl(FormControlType::Grid,'Grid');
+        #    formBuildGridControl.dataSource(query.dataSourceNo(1).name());
+        #    formBuildGridControl.allowEdit(true);
+        #    formBuildGridControl.showRowLabels(false);
+        #    idx = formBuildGridControl.id();
+        #
+        #    this.buildGrid(formBuildGridControl, form);
+        #
+        #    args = new Args();
+        #    args.object(form);
+        #    if(useLookupValue && !tmpBuffer)  //highlighting existing value doesn't work with temp tables
+        #    {
+        #        args.lookupField(lookupField);
+        #        switch (callingControl.handle())
+        #        {
+        #            case classnum(FormStringControl):
+        #                callingStringControl = callingControl;
+        #                args.lookupValue(callingStringControl.text());
+        #                break;
+        #        }
+        #    }
+        #    formRun         = classfactory.formRunClass(args);
+        #    form            = formRun.form();
+        #
+        #    formRun.init();
+        #
+        #    formDataSource  = formRun.dataSource(1);
+        #
+        #    formGridControl = formRun.control(idx);
+        #    formGridControl.setFocus();
+        #    formRun.selectMode(formRun.control(controlIdx));
+        #
+        #    if (query)
+        #    {
+        #        formDataSource.query(query);
+        #    }
+        #
+        #    if (tmpBuffer)
+        #    {
+        #        if (query.dataSourceCount() > 1)
+        #            throw error("Multiple temporary datasource lookups are not supported");
+        #
+        #        formDataSource.init();
+        #
+        #        //BP deviation documented
+        #        formDataSource.cursor().setTmp();       // if using non-temp table in tmp mode
+        #        formDataSource.cursor().setTmpData(tmpBuffer);
+        #    }
+        #
+        #    this.buildSelectionList(formDataSource.query());
+        #
+        #    formRun.selectMode(formRun.control(controlIdx));
+        #    this.addFilter(formRun);
+        #
+        #    return formRun;
+        #}
+      ENDSOURCE
+      SOURCE #joinMode2LinkType
+        #FormLinkType joinMode2LinkType(JoinMode _joinMode)
+        #{
+        #    switch (_joinMode)
+        #    {
+        #        case JoinMode::InnerJoin:
+        #            return FormLinkType::InnerJoin;
+        #        case JoinMode::OuterJoin:
+        #            return FormLinkType::OuterJoin;
+        #        case JoinMode::ExistsJoin:
+        #            return FormLinkType::ExistJoin;
+        #        case JoinMode::NoExistsJoin:
+        #            return FormLinkType::NotExistJoin;
+        #    }
+        #
+        #    throw error(Error::wrongUseOfFunction(funcName()));
+        #}
+      ENDSOURCE
+      SOURCE #parmCallingControl
+        #FormControl parmCallingControl(FormControl _callingControl = callingControl)
+        #{
+        #    ;
+        #    callingControl = _callingControl;
+        #    return callingControl;
+        #}
+      ENDSOURCE
+      SOURCE #parmQuery
+        #Query parmQuery(Query _query = query)
+        #{
+        #    ;
+        #    query = _query;
+        #
+        #    return query;
+        #}
+      ENDSOURCE
+      SOURCE #parmTmpBuffer
+        #Common parmTmpBuffer(Common _buffer = tmpBuffer)
+        #{
+        #    ;
+        #    tmpBuffer = _buffer;
+        #    return tmpBuffer;
+        #}
+      ENDSOURCE
+      SOURCE #parmUseLookupValue
+        #boolean parmUseLookupValue(boolean _useLookupValue = useLookupValue)
+        #{
+        #    ;
+        #    useLookupValue = _useLookupValue;
+        #
+        #    return useLookupValue;
+        #}
+      ENDSOURCE
+      SOURCE #performFormLookup
+        #void performFormLookup()
+        #{
+        #    #AOT
+        #    FormStringControl   callingStringControl;
+        #    FormIntControl      callingIntControl;
+        #    #if.ReferencesPath
+        #    FormInt64Control    callingInt64Control;
+        #    #endif
+        #    FormDateControl     callingDateControl;
+        #    ;
+        #    if (!callingControl)
+        #        throw(error(Error::wrongUseOfFunction(funcname())));
+        #
+        #    switch (callingControl.handle())
+        #    {
+        #        case classnum(FormStringControl):
+        #            callingStringControl = callingControl;
+        #            callingStringControl.performFormLookup(this.formRun());
+        #            break;
+        #        case classnum(FormIntControl):
+        #            callingIntControl = callingControl;
+        #            callingIntControl.performFormLookup(this.formRun());
+        #            break;
+        #        #if.ReferencesPath
+        #        case classnum(FormInt64Control):
+        #            callingInt64Control = callingControl;
+        #            callingInt64Control.performFormLookup(this.formRun());
+        #            break;
+        #        #endif
+        #        case classnum(FormDateControl):
+        #            callingDateControl = callingControl;
+        #            callingDateControl.performFormLookup(this.formRun());
+        #            break;
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #setLabel
+        #void setLabel(str label)
+        #{
+        #    labels[conlen(lookupItems)] = label;
+        #}
+      ENDSOURCE
+      SOURCE #types2ControlType
+        #FormControlType types2ControlType(Types _returnType, UtilElementId _Id)
+        #{
+        #    #AOT
+        #    switch(_returnType)
+        #    {
+        #        case Types::String:
+        #            return FormControlType::String;
+        #        case Types::Real:
+        #            return FormControlType::Real;
+        #        case Types::Date:
+        #            return FormControlType::Date;
+        #        #if.ServicesPath
+        #        case Types::UtcDateTime:
+        #            return FormControlType::DateTime;
+        #        #endif
+        #        case Types::Integer:
+        #            if (_id && Global::isType(_id, extendedTypeNum(timeOfDay)))
+        #                return FormControlType::Time;
+        #            return FormControlType::Integer;
+        #        #if.ReferencesPath
+        #        case Types::Int64:
+        #            return FormControlType::Int64;
+        #        case Types::Guid:
+        #            return FormControlType::Guid;
+        #        #endif
+        #        case Types::Enum:
+        #            if (_id && Global::isType(_id, extendedTypeNum(NoYesId)))
+        #                return FormControlType::CheckBox;
+        #            return FormControlType::ComboBox;
+        #    }
+        #    throw error(strfmt("@SYS110310", _returnType));
+        #}
+        #
+      ENDSOURCE
+      SOURCE #construct
+        #static SysMultiTableLookup construct()
+        #{
+        #    return new SysMultiTableLookup();
+        #}
+      ENDSOURCE
+      SOURCE #filterLookupPostRun
+        #/// <summary>
+        #/// Simulates the code that is performed in the kernel to allow
+        #/// filtering to work properly in custom lookup forms.
+        #/// </summary>
+        #/// <param name="_isFiltered">
+        #/// The result value from the FilterLookupPreRun method.
+        #/// </param>
+        #/// <param name="_filterString">
+        #/// The filter string contained within the lookup control.
+        #/// </param>
+        #/// <param name="_controlToFilter">
+        #/// The control on the lookup form that is bound to the field to filter the value on.
+        #/// </param>
+        #/// <param name="_formDataSource">
+        #/// The FormDataSource value on the lookup form.
+        #/// </param>
+        #/// <remarks>
+        #/// This method should be called after the super call in the custom lookup
+        #/// form's run method.
+        #/// </remarks>
+        #public static void filterLookupPostRun(boolean              _isFiltered,
+        #                                       str                  _filterString,
+        #                                       FormStringControl    _controlToFilter,
+        #                                       FormDataSource       _formDataSource)
+        #{
+        #    ;
+        #    if (_isFiltered)
+        #    {
+        #        //The FormDataSource doesn't have a QueryRun since AutoSearch is false
+        #        //Therefore we need to create one so that the filter call below will succeed.
+        #        _formDataSource.queryRun(new SysQueryRun(_formDataSource.query()));
+        #
+        #        _controlToFilter.filter(_filterString);
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #filterLookupPreRun
+        #/// <summary>
+        #/// This method simulates the code that is performed in the kernel to allow
+        #/// filtering to work properly in custom lookup Forms.
+        #/// </summary>
+        #/// <param name="_lookupControl">
+        #/// The control that contains the field value being looked up.
+        #/// </param>
+        #/// <param name="_controlToFilter">
+        #/// The control on the Lookup Form that is bound to the field to filter the value on.
+        #/// </param>
+        #/// <param name="_formDataSource">
+        #/// The FormDataSource on the Lookup Form.
+        #/// </param>
+        #/// <param name="_listExtraFormDataSources">
+        #/// The list of additional FormDataSource objects on the Lookup Form
+        #/// where the autoSearch parameter should be set to false in case of filtering.
+        #/// </param>
+        #/// <returns>
+        #/// Whether the value in the control contains a value that should be filtered on.
+        #/// </returns>
+        #/// <remarks>
+        #/// This method should be called before the Super method call in the custom Lookup
+        #/// form's run method.
+        #/// </remarks>
+        #public static boolean filterLookupPreRun(FormStringControl  _lookupControl,
+        #                                         FormStringControl  _controlToFilter,
+        #                                         FormDataSource     _formDataSource,
+        #                                         List               _listExtraFormDataSources   = null)
+        #{
+        #    boolean         isFiltered  = false;
+        #    str             controlText = _lookupControl.text();
+        #    str             filterValue = strkeep(controlText, '*');
+        #    ListEnumerator  listEnumerator;
+        #    FormDataSource  extraFormDataSource;
+        #    ;
+        #
+        #    if (strlen(filterValue) != 0 && _lookupControl.hasChanged())
+        #    {
+        #        _formDataSource.autoSearch(false);
+        #
+        #        if(_listExtraFormDataSources)
+        #        {
+        #            listEnumerator = _listExtraFormDataSources.getEnumerator();
+        #
+        #            while(listEnumerator && listEnumerator.moveNext())
+        #            {
+        #                extraFormDataSource = listEnumerator.current();
+        #
+        #                if(extraFormDataSource)
+        #                {
+        #                    extraFormDataSource.autoSearch(false);
+        #                }
+        #            }
+        #        }
+        #
+        #        isFiltered = true;
+        #    }
+        #    else
+        #    {
+        #        if(_controlToFilter)
+        #        {
+        #            _formDataSource.formRun().args().lookupField(_controlToFilter.dataField());
+        #            _formDataSource.formRun().args().lookupValue(controlText);
+        #        }
+        #    }
+        #
+        #    return isFiltered;
+        #}
+      ENDSOURCE
+      SOURCE #filterLookupPreRun_2DS
+        #/// <summary>
+        #/// This method simulates the code that is performed in the kernel to allow
+        #/// filtering to work properly in custom lookup forms with two data sources.
+        #/// </summary>
+        #/// <param name="_lookupControl">
+        #/// The control that contains the field value being looked up.
+        #/// </param>
+        #/// <param name="_controlToFilter">
+        #/// The control on the lookup form that is bound to the field to filter the value on.
+        #/// </param>
+        #/// <param name="_formDataSource">
+        #/// The first FormDataSource value on the lookup form.
+        #/// </param>
+        #/// <param name="_formDataSource2">
+        #/// The second FormDataSource value on the lookup form
+        #/// where the autoSearch parameter should be set to false in case of filtering.
+        #/// </param>
+        #/// <returns>
+        #/// Whether the value in the control contains a value that should be filtered on.
+        #/// </returns>
+        #/// <remarks>
+        #/// This method should be called before the Super method call in the custom lookup
+        #/// form's run method.
+        #/// </remarks>
+        #public static boolean filterLookupPreRun_2DS(FormStringControl  _lookupControl,
+        #                                             FormStringControl  _controlToFilter,
+        #                                             FormDataSource     _formDataSource,
+        #                                             FormDataSource     _formDataSource2)
+        #{
+        #    List listExtraFormDataSources = new List(Types::Class);
+        #    ;
+        #    listExtraFormDataSources.addEnd(_formDataSource2);
+        #
+        #    return SysMultiTableLookup::filterLookupPreRun(_lookupControl, _controlToFilter, _formDataSource, listExtraFormDataSources);
+        #}
+      ENDSOURCE
+      SOURCE #filterLookupPreRun_3DS
+        #/// <summary>
+        #/// This method simulates the code that is performed in the kernel to allow
+        #/// filtering to work properly in custom lookup forms with three data sources.
+        #/// </summary>
+        #/// <param name="_lookupControl">
+        #/// The control that contains the field value being looked up.
+        #/// </param>
+        #/// <param name="_controlToFilter">
+        #/// The control on the lookup form that is bound to the field to filter the value on.
+        #/// </param>
+        #/// <param name="_formDataSource">
+        #/// The first FormDataSource value on the lookup form.
+        #/// </param>
+        #/// <param name="_formDataSource2">
+        #/// The second FormDataSource value on the lookup form.
+        #/// </param>
+        #/// <param name="_formDataSource3">
+        #/// The third FormDataSource value on the lookup form
+        #/// where the autoSearch parameter should be set to false in case of filtering.
+        #/// </param>
+        #/// <returns>
+        #/// Whether the value in the control contains a value that should be filtered on.
+        #/// </returns>
+        #/// <remarks>
+        #/// This method should be called before the Super method call in the custom lookup
+        #/// form's run method.
+        #/// </remarks>
+        #public static boolean filterLookupPreRun_3DS(FormStringControl  _lookupControl,
+        #                                             FormStringControl  _controlToFilter,
+        #                                             FormDataSource     _formDataSource,
+        #                                             FormDataSource     _formDataSource2,
+        #                                             FormDataSource     _formDataSource3)
+        #{
+        #    List listExtraFormDataSources = new List(Types::Class);
+        #    ;
+        #    listExtraFormDataSources.addEnd(_formDataSource2);
+        #    listExtraFormDataSources.addEnd(_formDataSource3);
+        #
+        #    return SysMultiTableLookup::filterLookupPreRun(_lookupControl, _controlToFilter,
+        #                                                   _formDataSource, listExtraFormDataSources);
+        #}
+      ENDSOURCE
+      SOURCE #getCallerStringControl
+        #// Used by lookup forms to get the calling string control
+        #client static FormStringControl getCallerStringControl(Args args, boolean throwOnError = true)
+        #{
+        #    FormStringControl   callerControl;
+        #    FormRun             caller;
+        #    ;
+        #    if (args && args.caller())
+        #    {
+        #        if(args.caller().handle() == classnum(FormStringControl))
+        #        {
+        #             // When constructed from code the control must be inserted in the args.caller()
+        #            callerControl = args.caller();
+        #        }
+        #        else if (SysMultiTableLookup::is(args.caller(),classnum(FormRun)))
+        #        {
+        #            // When the form is assigned on the extended data type the calling formRun is the caller.
+        #            caller = args.caller();
+        #            if (caller.selectedControl().handle() == classnum(FormStringControl))
+        #                callerControl = caller.selectedControl();
+        #        }
+        #        if (!callerControl)
+        #        {   // Test if it has been put in the parmObject object.
+        #            if (args.parmObject() && args.parmObject().handle() == classnum(FormStringControl))
+        #                callerControl = args.parmObject();
+        #        }
+        #    }
+        #
+        #    if (throwOnError && !callerControl)
+        #        throw(error(Error::wrongUseOfFunction(funcname())));
+        #
+        #    return callerControl;
+        #}
+      ENDSOURCE
+      SOURCE #is
+        #public static boolean is(Object _class, classId _classId)
+        #{
+        #    boolean ret = new SysDictClass(classidget(_class)).isImplementing(_classId);
+        #
+        #    if (!ret)
+        #    {
+        #        ret = SysDictClass::isEqualOrSuperclass(classidget(_class), _classId);
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #isEqualOrExtending
+        #//Method copied over from AX 2009 installation
+        #static boolean isEqualOrExtending(extendedTypeId _id, extendedTypeId _potentialParentId)
+        #{
+        #    SysDictType sysDictType;
+        #    ;
+        #    if(_id == _potentialParentId)
+        #    {
+        #        return true;
+        #    }
+        #
+        #    sysDictType = new SysDictType(_id);
+        #    if (sysDictType)
+        #    {
+        #        return sysDictType.isExtending(_potentialParentId);
+        #    }
+        #    else
+        #    {
+        #        return false;
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #lookupTabChanged
+        #/// <summary>
+        #/// This method is used in the custom lookup forms
+        #/// to apply a filter on the new tab page when it is activated.
+        #/// </summary>
+        #/// <param name="_lookupControl">
+        #/// The control that contains the field value being looked up.
+        #/// </param>
+        #/// <param name="_controlToFilter">
+        #/// The control on the lookup form that is bound to the field to filter the value on.
+        #/// </param>
+        #/// <param name="_formDataSource">
+        #/// The FormDataSource value on the lookup form.
+        #/// </param>
+        #/// <remarks>
+        #/// Usually this method should be called from the tabChanged method of the tab control
+        #/// on the form.
+        #/// </remarks>
+        #public static void lookupTabChanged(FormStringControl   _lookupControl,
+        #                                    FormStringControl   _controlToFilter,
+        #                                    FormDataSource      _formDataSource)
+        #{
+        #    boolean filterLookup;
+        #    ;
+        #    filterLookup = SysMultiTableLookup::filterLookupPreRun(_lookupControl, _controlToFilter, _formDataSource);
+        #
+        #    if(filterLookup)
+        #    {
+        #        SysMultiTableLookup::filterLookupPostRun(filterLookup, _lookupControl.text(), _controlToFilter, _formDataSource);
+        #    }
+        #    else
+        #    {
+        #        _formDataSource.executeQuery();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #newParameters
+        #static SysMultiTableLookup newParameters(FormControl callingControl, Query _query, boolean useLookupValue = true)
+        #{
+        #    SysMultiTableLookup sysTableLookup = SysMultiTableLookup::construct();
+        #    ;
+        #    if (_query.dataSourceCount() < 1)
+        #        throw error(@"Query needs to be defined before building the lookup");
+        #
+        #    sysTableLookup.parmQuery(_query);
+        #    sysTableLookup.parmCallingControl(callingControl);
+        #    sysTableLookup.parmUseLookupValue(useLookupValue);
+        #
+        #    return sysTableLookup;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: FRM
+
+; Microsoft Business Solutions-Axapta Forms unloaded at Monday 9/22/2008
+; --------------------------------------------------------------------------------
+FRMVERSION 5
+
+FORM #Tutorial_SysMultiTableLookup
+  PROPERTIES
+    Name                #Tutorial_SysMultiTableLookup
+  ENDPROPERTIES
+  
+  METHODS
+    Version: 3
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+  ENDOBJECTBANK
+  
+  JOINS
+  ENDJOINS
+  
+  DESIGN
+    PROPERTIES
+      Left                #Auto (left)
+      Top                 #Auto
+      Width               #Auto
+      Height              #Auto
+      Visible             #Yes
+      Caption             #Tutorial for SysMultiTableLookup
+      TitleDatasource     #
+      Frame               #Standard
+      WindowResize        #Auto
+      WindowType          #Standard
+      SaveSize            #No
+      AlwaysOnTop         #No
+      HideToolbar         #No
+      SetCompany          #Yes
+      ColorScheme         #Default
+      CssClass            #
+      ShowWebHelp         #Default
+      BackgroundColor     #Button face (3D)
+      ImageName           #
+      ImageResource       #0
+      Imagemode           #Normal (preserve pict. attributes)
+      Mode                #Watch
+      SubmitMethod        #Auto
+      SupportReload       #No
+      LocalWebMenu        #
+      AllowDocking        #No
+      Font                #
+      FontSize            #0
+      Italic              #No
+      Underline           #No
+      Bold                #Default
+      CharacterSet        #0
+      LabelFont           #
+      LabelFontSize       #0
+      LabelItalic         #No
+      LabelUnderline      #No
+      LabelBold           #Default
+      LabelCharacterSet   #0
+      DataSource          #
+      TopMargin           #Auto
+      BottomMargin        #Auto
+      LeftMargin          #Auto
+      RightMargin         #Auto
+      ArrangeWhen         #Default
+      ArrangeMethod       #Vertical
+      Columns             #1
+      Columnspace         #Auto
+      ArrangeGuide        
+        ARRAY INDEX Columns 
+          #0
+        ENDARRAY
+      HideIfEmpty         #Yes
+      AlignChildren       #Yes
+      AlignChild          #Yes
+      AllowUserSetup      #Yes
+      NeededAccessLevel   #NoAccess
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL STRINGEDIT
+        ;==== controlId:12289, containerId: 0, containerdata: 0   
+        ;----------------------------------------------------------
+        PROPERTIES
+          Name                #ItemIdMultiTable
+          AutoDeclaration     #No
+          Visible             #Yes
+          AllowEdit           #Yes
+          Left                #Auto (left)
+          Top                 #Auto
+          Width               #Auto
+          Height              #Auto
+          VerticalSpacing     #Auto
+          Enabled             #Yes
+          Skip                #No
+          AlignControl        #Yes
+          HelpText            #
+          ConfigurationKey    #
+          SecurityKey         #
+          DragDrop            #None
+          LookupButton        #Auto
+          ReplaceOnLookup     #Yes
+          LimitText           #Auto
+          DisplayLength       #Auto
+          DisplayHeight       #Auto
+          Border              #Auto
+          Text                #
+          PasswordStyle       #No
+          Alignment           #Auto
+          ChangeCase          #Auto
+          MultiLine           #No
+          ColorScheme         #Default
+          BackStyle           #Opaque
+          BackgroundColor     #Window background
+          ForegroundColor     #Window text
+          Font                #
+          FontSize            #0
+          Italic              #No
+          Underline           #No
+          Bold                #Default
+          CharacterSet        #0
+          LabelForegroundColor #Window text
+          ShowLabel           #Yes
+          Label               #ItemId from multiple tables
+          LabelFont           #
+          LabelFontSize       #0
+          LabelItalic         #No
+          LabelUnderline      #No
+          LabelBold           #Default
+          LabelCharacterSet   #0
+          LabelWidth          #Auto
+          LabelHeight         #Auto
+          LabelPosition       #Left
+          LabelAlignment      #Left
+          DataSource          #
+          DataField           #
+          Mandatory           #No
+          ExtendedDataType    
+            ARRAY 
+              #ItemId
+              #
+            ENDARRAY
+          ArrayIndex          #0
+          DataMethod          #
+          SearchMode          #None
+        ENDPROPERTIES
+        
+        METHODS
+          Version: 3
+          SOURCE #lookup
+            #public void lookup()
+            #{
+            #    Query                   query = new Query();
+            #    QueryBuildDataSource    qbdsItem;
+            #    QueryBuildDataSource    qbdsInventTableModule;
+            #    QueryBuildDataSource    qbdsInventItemLocation;
+            #    QueryBuildRange         qbrModuleType;
+            #    SysMultiTableLookup     sysTableLookup;
+            #    ;
+            #    qbdsItem = query.addDataSource(tableNum(InventTable));
+            #
+            #    qbdsInventTableModule = qbdsItem.addDataSource(tableNum(InventTableModule), "Purch");
+            #    qbdsInventTableModule.relations(true);
+            #    qbdsInventTableModule.fetchMode(QueryFetchMode::One2One);
+            #    qbrModuleType = qbdsInventTableModule.addRange(fieldNum(InventTableModule, ModuleType));
+            #    qbrModuleType.value(queryValue(ModuleInventPurchSales::Purch));
+            #
+            #    qbdsInventTableModule = qbdsItem.addDataSource(tableNum(InventTableModule), "Invent");
+            #    qbdsInventTableModule.relations(true);
+            #    qbdsInventTableModule.fetchMode(QueryFetchMode::One2One);
+            #    qbrModuleType = qbdsInventTableModule.addRange(fieldNum(InventTableModule, ModuleType));
+            #    qbrModuleType.value(queryValue(ModuleInventPurchSales::Invent));
+            #
+            #    qbdsInventTableModule = qbdsItem.addDataSource(tableNum(InventTableModule), "Sales");
+            #    qbdsInventTableModule.relations(true);
+            #    qbdsInventTableModule.fetchMode(QueryFetchMode::One2One);
+            #    qbrModuleType = qbdsInventTableModule.addRange(fieldNum(InventTableModule, ModuleType));
+            #    qbrModuleType.value(queryValue(ModuleInventPurchSales::Sales));
+            #
+            #    qbdsInventItemLocation = qbdsItem.addDataSource(tableNum(InventItemLocation));
+            #    qbdsInventItemLocation.relations(true);
+            #    qbdsInventItemLocation.fetchMode(QueryFetchMode::One2One);
+            #
+            #    sysTableLookup = SysMultiTableLookup::newParameters(this, query);
+            #
+            #    sysTableLookup.addLookupField(fieldNum(InventTable, ItemId));
+            #    sysTableLookup.addLookupField(fieldNum(InventTable, ItemName));
+            #    sysTableLookup.addLookupMethod(tableMethodStr(InventTable, ConfigActive), 1, "Is configuration active?");
+            #    sysTableLookup.addLookupField(fieldNum(InventTableModule, TaxItemGroupId), 2, false, "Purch Item Tax Group");
+            #    sysTableLookup.addLookupField(fieldNum(InventTableModule, TaxItemGroupId), 3);
+            #    sysTableLookup.addLookupField(fieldNum(InventTableModule, TaxItemGroupId), 4);
+            #    sysTableLookup.addLookupField(fieldNum(InventItemLocation, CountGroupId), 5);
+            #
+            #    sysTableLookup.performFormLookup();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        ;==== controlId:12290, containerId: 0, containerdata: 0   
+        ;----------------------------------------------------------
+        PROPERTIES
+          Name                #ItemIdRegular
+          AutoDeclaration     #No
+          Visible             #Yes
+          AllowEdit           #Yes
+          Left                #Auto (left)
+          Top                 #Auto
+          Width               #Auto
+          Height              #Auto
+          VerticalSpacing     #Auto
+          Enabled             #Yes
+          Skip                #No
+          AlignControl        #Yes
+          HelpText            #
+          ConfigurationKey    #
+          SecurityKey         #
+          DragDrop            #None
+          LookupButton        #Auto
+          ReplaceOnLookup     #Yes
+          LimitText           #Auto
+          DisplayLength       #Auto
+          DisplayHeight       #Auto
+          Border              #Auto
+          Text                #
+          PasswordStyle       #No
+          Alignment           #Auto
+          ChangeCase          #Auto
+          MultiLine           #No
+          ColorScheme         #Default
+          BackStyle           #Opaque
+          BackgroundColor     #Window background
+          ForegroundColor     #Window text
+          Font                #
+          FontSize            #0
+          Italic              #No
+          Underline           #No
+          Bold                #Default
+          CharacterSet        #0
+          LabelForegroundColor #Window text
+          ShowLabel           #Yes
+          Label               #ItemId regular lookup
+          LabelFont           #
+          LabelFontSize       #0
+          LabelItalic         #No
+          LabelUnderline      #No
+          LabelBold           #Default
+          LabelCharacterSet   #0
+          LabelWidth          #Auto
+          LabelHeight         #Auto
+          LabelPosition       #Left
+          LabelAlignment      #Left
+          DataSource          #
+          DataField           #
+          Mandatory           #No
+          ExtendedDataType    
+            ARRAY 
+              #ItemId
+              #
+            ENDARRAY
+          ArrayIndex          #0
+          DataMethod          #
+          SearchMode          #None
+        ENDPROPERTIES
+        
+        METHODS
+          Version: 3
+          SOURCE #lookup
+            #public void lookup()
+            #{
+            #    Query                   query = new Query();
+            #    QueryBuildDataSource    qbdsItem;
+            #    SysMultiTableLookup     sysTableLookup;
+            #    ;
+            #    qbdsItem = query.addDataSource(tableNum(InventTable));
+            #
+            #    sysTableLookup = SysMultiTableLookup::newParameters(this, query);
+            #
+            #    sysTableLookup.addLookupField(fieldNum(InventTable, ItemId));
+            #    sysTableLookup.addLookupField(fieldNum(InventTable, ItemName));
+            #    sysTableLookup.addLookupField(fieldNum(InventTable, ItemType));
+            #    sysTableLookup.addLookupField(fieldNum(InventTable, ItemGroupId));
+            #
+            #    sysTableLookup.performFormLookup();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        ;==== controlId:12291, containerId: 0, containerdata: 0   
+        ;----------------------------------------------------------
+        PROPERTIES
+          Name                #SalesIdwithQtySum
+          AutoDeclaration     #No
+          Visible             #Yes
+          AllowEdit           #Yes
+          Left                #Auto (left)
+          Top                 #Auto
+          Width               #Auto
+          Height              #Auto
+          VerticalSpacing     #Auto
+          Enabled             #Yes
+          Skip                #No
+          AlignControl        #Yes
+          HelpText            #
+          ConfigurationKey    #
+          SecurityKey         #
+          DragDrop            #None
+          LookupButton        #Auto
+          ReplaceOnLookup     #Yes
+          LimitText           #Auto
+          DisplayLength       #Auto
+          DisplayHeight       #Auto
+          Border              #Auto
+          Text                #
+          PasswordStyle       #No
+          Alignment           #Auto
+          ChangeCase          #Auto
+          MultiLine           #No
+          ColorScheme         #Default
+          BackStyle           #Opaque
+          BackgroundColor     #Window background
+          ForegroundColor     #Window text
+          Font                #
+          FontSize            #0
+          Italic              #No
+          Underline           #No
+          Bold                #Default
+          CharacterSet        #0
+          LabelForegroundColor #Window text
+          ShowLabel           #Yes
+          Label               #Sales order with Qty sum
+          LabelFont           #
+          LabelFontSize       #0
+          LabelItalic         #No
+          LabelUnderline      #No
+          LabelBold           #Default
+          LabelCharacterSet   #0
+          LabelWidth          #Auto
+          LabelHeight         #Auto
+          LabelPosition       #Left
+          LabelAlignment      #Left
+          DataSource          #
+          DataField           #
+          Mandatory           #No
+          ExtendedDataType    
+            ARRAY 
+              #InventTransRefId
+              #
+            ENDARRAY
+          ArrayIndex          #0
+          DataMethod          #
+          SearchMode          #None
+        ENDPROPERTIES
+        
+        METHODS
+          Version: 3
+          SOURCE #lookup
+            #public void lookup()
+            #{
+            #    SysMultiTableLookup     sysTableLookup;
+            #    Query                   query = new Query();
+            #    QueryBuildDataSource    queryBuildDataSource;
+            #    ;
+            #
+            #    queryBuildDataSource = query.addDataSource(tablenum(InventTrans));
+            #    queryBuildDataSource.orderMode(OrderMode::GROUPBY);
+            #    queryBuildDataSource.addSortField(fieldNum(InventTrans, TransType));
+            #    queryBuildDataSource.addSortField(fieldNum(InventTrans, TransRefId));
+            #    queryBuildDataSource.addSelectionField(fieldNum(InventTrans, Qty), SelectionField::Sum);
+            #
+            #    sysTableLookup = SysMultiTableLookup::newParameters(this, query, false);
+            #    sysTableLookup.addLookupfield(fieldNum(InventTrans, TransRefId));
+            #    sysTableLookup.addLookupfield(fieldNum(InventTrans, TransType));
+            #    sysTableLookup.addLookupField(fieldNum(InventTrans, Qty));
+            #
+            #    sysTableLookup.performFormLookup();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        ;==== controlId:12292, containerId: 0, containerdata: 0   
+        ;----------------------------------------------------------
+        PROPERTIES
+          Name                #UserIdOuterJoin
+          AutoDeclaration     #No
+          Visible             #Yes
+          AllowEdit           #Yes
+          Left                #Auto (left)
+          Top                 #Auto
+          Width               #Auto
+          Height              #Auto
+          VerticalSpacing     #Auto
+          Enabled             #Yes
+          Skip                #No
+          AlignControl        #Yes
+          HelpText            #
+          ConfigurationKey    #
+          SecurityKey         #
+          DragDrop            #None
+          LookupButton        #Auto
+          ReplaceOnLookup     #Yes
+          LimitText           #Auto
+          DisplayLength       #Auto
+          DisplayHeight       #Auto
+          Border              #Auto
+          Text                #
+          PasswordStyle       #No
+          Alignment           #Auto
+          ChangeCase          #Auto
+          MultiLine           #No
+          ColorScheme         #Default
+          BackStyle           #Opaque
+          BackgroundColor     #Window background
+          ForegroundColor     #Window text
+          Font                #
+          FontSize            #0
+          Italic              #No
+          Underline           #No
+          Bold                #Default
+          CharacterSet        #0
+          LabelForegroundColor #Window text
+          ShowLabel           #Yes
+          Label               #UserId outer joined
+          LabelFont           #
+          LabelFontSize       #0
+          LabelItalic         #No
+          LabelUnderline      #No
+          LabelBold           #Default
+          LabelCharacterSet   #0
+          LabelWidth          #Auto
+          LabelHeight         #Auto
+          LabelPosition       #Left
+          LabelAlignment      #Left
+          DataSource          #
+          DataField           #
+          Mandatory           #No
+          ExtendedDataType    
+            ARRAY 
+              #userId
+              #
+            ENDARRAY
+          ArrayIndex          #0
+          DataMethod          #
+          SearchMode          #None
+        ENDPROPERTIES
+        
+        METHODS
+          Version: 3
+          SOURCE #lookup
+            #public void lookup()
+            #{
+            #    SysMultiTableLookup     sysTableLookup;
+            #    Query                   query = new Query();
+            #    QueryBuildDataSource    queryBuildDataSource;
+            #    QueryBuildDataSource    queryBuildDataSourceGroup;
+            #    ;
+            #    queryBuildDataSource = query.addDataSource(tablenum(UserInfo));
+            #    queryBuildDataSourceGroup = queryBuildDataSource.addDataSource(tablenum(UserGroupList));
+            #    queryBuildDataSourceGroup.joinMode(JoinMode::OuterJoin);
+            #    queryBuildDataSourceGroup.relations(true);
+            #
+            #    sysTableLookup  = SysMultiTableLookup::newParameters(this, query);
+            #    sysTableLookup.addLookupfield(fieldNum(UserInfo, Id));
+            #    sysTableLookup.addLookupfield(fieldNum(UserInfo, Name));
+            #    sysTableLookup.addLookupfield(fieldNum(UserGroupList, GroupId), 2);
+            #
+            #    sysTableLookup.performFormLookup();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+ENDFORM
+
+
+***Element: PRN
+
+; Microsoft Business Solutions-Axapta Project : SysMultiTableLookup unloaded at Monday 9/22/2008
+; --------------------------------------------------------------------------------
+  PROJECTVERSION 2
+  
+  PROJECT #SysMultiTableLookup
+   PRIVATE
+  PROPERTIES
+    Name                #SysMultiTableLookup
+  ENDPROPERTIES
+  
+    GROUP #Classes
+      PROPERTIES
+        Name                #Classes
+        ProjectGroupType    #Classes
+        GroupMask           #
+        PreventEditProperties #No
+      ENDPROPERTIES
+      
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 50318
+        NODETYPE 329
+        NAME #SysMultiTableLookup
+      ENDNODE
+      ENDGROUP
+      
+    GROUP #Forms
+      PROPERTIES
+        Name                #Forms
+        ProjectGroupType    #Forms
+        GroupMask           #
+        PreventEditProperties #No
+      ENDPROPERTIES
+      
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 11
+        UTILOBJECTID 0
+        NODETYPE 201
+        NAME #Tutorial_SysMultiTableLookup
+      ENDNODE
+      ENDGROUP
+      
+  ENDPROJECT
+  
+
+***Element: END

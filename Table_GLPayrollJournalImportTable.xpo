@@ -1,0 +1,156 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Microsoft Dynamics AX Table : GLPayrollJournalImportTable unloaded
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #GLPayrollJournalImportTable
+    EnforceFKRelation 1
+    PROPERTIES
+      Name                #GLPayrollJournalImportTable
+      Label               #Labour invoice table
+      CreateRecIdIndex    #Yes
+      PrimaryIndex        #SurrogateKey
+      ClusterIndex        #SurrogateKey
+      CreatedDateTime     #Yes
+      Origin              #{49782AB6-F9E8-4616-9060-E44E1DF82462}
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #DateImported
+        DATE
+        PROPERTIES
+          Name                #DateImported
+          Label               #Import date
+          AllowEdit           #No
+          Table               #GLPayrollJournalImportTable
+          Origin              #{F94916AD-44C1-4E62-9B35-999D3D064EE9}
+          ExtendedDataType    #TransDate
+        ENDPROPERTIES
+        
+      FIELD #Description
+        STRING
+        PROPERTIES
+          Name                #Description
+          Table               #GLPayrollJournalImportTable
+          Origin              #{FDD36ED8-C317-42F8-AF28-0453206BE093}
+          ExtendedDataType    #Description
+          StringSize          #60
+        ENDPROPERTIES
+        
+      FIELD #GLPayrollJournalImportNum
+        STRING
+        PROPERTIES
+          Name                #GLPayrollJournalImportNum
+          Table               #GLPayrollJournalImportTable
+          Origin              #{09D85568-1F4C-41EF-B7B7-711FF51A4C51}
+          ExtendedDataType    #GLPayrollJournalImportNum
+          StringSize          #20
+        ENDPROPERTIES
+        
+      FIELD #GLPayrollJournalImportState
+        ENUM
+        PROPERTIES
+          Name                #GLPayrollJournalImportState
+          AllowEdit           #No
+          Table               #GLPayrollJournalImportTable
+          Origin              #{F8A41209-20E4-4366-A842-2A0390B41108}
+          EnumType            #GLPayrollJournalImportState
+        ENDPROPERTIES
+        
+      FIELD #ImportedBy
+        STRING
+        PROPERTIES
+          Name                #ImportedBy
+          Label               #Import by
+          AllowEdit           #No
+          Table               #GLPayrollJournalImportTable
+          Origin              #{A580A924-88FB-4FCE-AF19-145E3F1F43EC}
+          StringSize          #50
+        ENDPROPERTIES
+        
+      FIELD #InvoiceId
+        STRING
+        PROPERTIES
+          Name                #InvoiceId
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Table               #GLPayrollJournalImportTable
+          Origin              #{29AB34F2-688E-4351-8348-24FEC033A72E}
+          ExtendedDataType    #CustInvoiceId
+          StringSize          #20
+        ENDPROPERTIES
+        
+      FIELD #PostedBy
+        STRING
+        PROPERTIES
+          Name                #PostedBy
+          Label               #Posted by
+          AllowEdit           #No
+          Table               #GLPayrollJournalImportTable
+          Origin              #{D79D7971-815E-4E5C-B101-58280970009A}
+          StringSize          #50
+        ENDPROPERTIES
+        
+      FIELD #PostingDate
+        DATE
+        PROPERTIES
+          Name                #PostingDate
+          Label               #Posting date
+          AllowEdit           #No
+          Table               #GLPayrollJournalImportTable
+          Origin              #{F7E05220-0CD6-4638-9B8F-753B81FAF15D}
+          ExtendedDataType    #TransDate
+        ENDPROPERTIES
+        
+      FIELD #Total
+        REAL
+        PROPERTIES
+          Name                #Total
+          AllowEdit           #No
+          Table               #GLPayrollJournalImportTable
+          Origin              #{25497E79-5B00-4575-BDCC-21C731C1E138}
+          ExtendedDataType    #AmountCur
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+    ENDGROUPS
+    
+    INDICES
+    ENDINDICES
+    FULLTEXTINDICES
+    ENDFULLTEXTINDICES
+    REFERENCES
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+      SOURCE #delete
+        #public void delete()
+        #{
+        #   GLPayrollJournalImportLines lines;
+        #    GLPayrollJournalImportNum num = this.GLPayrollJournalImportNum;
+        #    super();
+        #    delete_from lines where Lines.GLPayrollJournalImportNum == num;
+        #
+        #}
+      ENDSOURCE
+      SOURCE #find
+        #public static HcmLabourInvoiceTable find(HcmLabourInvoiceImportNum num)
+        #{
+        #    HcmLabourInvoiceTable buffer;
+        #    select firstOnly buffer where buffer.HcmLabourInvoiceImportNum == num;
+        #    return buffer;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END

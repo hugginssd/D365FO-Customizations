@@ -1,0 +1,110 @@
+        /// <summary>
+        ///Editing here
+        /// </summary>
+        public void clicked()
+        {
+           HcmLabourInvoiceTable buffer;
+           HcmLabourInvoiceTrans line;
+           COMVariantType type;
+           int ccCount;
+           str costCenter;
+           ;
+           ccCount = 1;
+           costCenter = '';
+           super();
+
+           System.IO.Stream          stream;
+           DialogGroup               dlgUploadGroup;
+           FileUploadBuild           fileUploadBuild;
+           FormBuildControl          formBuildControl;
+           Dialog                    dialog = new Dialog("Import records from excel");  
+
+           dlgUploadGroup           = dialog.addGroup("@SYS54759");
+           formBuildControl         = dialog.formBuildDesign().control(dlgUploadGroup.name());
+
+           fileUploadBuild          = formBuildControl.addControlEx(classStr(FileUpload), 'Upload');
+           fileUploadBuild.style(FileUploadStyle::MinimalWithFilename);
+           fileUploadBuild.fileTypesAccepted('.xlsx');
+
+           if(dialog.run() && dialog.closedOk())
+           {
+               FileUpload fileUploadControl                         =  dialog.formRun().control(dialog.formRun().controlId('Upload'));
+               //try 
+               //{
+                   FileUploadTemporaryStorageResult fileUploadResult    = fileUploadControl.getFileUploadResult();
+
+               if(fileUploadResult != null && fileUploadResult.getUploadStatus())
+               {
+                   stream      = fileUploadResult.openResult();
+
+                   using(ExcelPackage package = new ExcelPackage(stream))                    
+                   {
+                       int                         rowCount, iterator;
+                       Package.Load(stream);
+                       ExcelWorksheet              worksheet           =  package.get_Workbook().get_Worksheets().get_Item(1);
+                       OfficeOpenXml.ExcelRange    range               =  worksheet.Cells;
+
+                       rowCount                                        = worksheet.Dimension.End.Row - worksheet.Dimension.Start.Row + 1;
+
+                       iterator++; //skip column names
+
+                       do
+                       {
+                           iterator++;
+                           line.clear();
+                           line.HcmLabourInvoiceImportNum = HcmLabourInvoiceTable.HcmLabourInvoiceImportNum;
+                           //line.Department = any2str(cells.item(row, 1).value().toString());
+                           //line.Section = cells.item(row, 2).value().bStr();
+                           line.CostCenter = range.get_Item(iterator, 1).Value;
+                           if(costCenter != range.get_Item(iterator, 1).Value)
+                           {
+                               //restart the count
+                               ccCount = 1;
+                           }
+                           costCenter = line.CostCenter;
+
+                           line.CountField = ccCount;
+                           line.ECNumber           = range.get_Item(iterator,3).Value;
+                           line.Surname            = range.get_Item(iterator,4).Value;
+                           line.FirstName          = range.get_Item(iterator,5).Value;
+                           line.NormalShiftHours   = range.get_Item(iterator,6).Value;
+                           line.PlannedOT15        = any2Real(range.get_Item(iterator,7).Value);
+                           line.PlannedOT20        = any2Real(range.get_Item(iterator,8).Value);
+                           line.StandByAllowance   = any2Real(range.get_Item(iterator,9).Value);
+                           line.CalloutOT15        = any2Real(range.get_Item(iterator,10).Value);
+                           line.CalloutOT20        = any2Real(range.get_Item(iterator,11).Value);
+                           line.PPHOT20            = any2Real(range.get_Item(iterator,12).Value);
+                           line.UndergroundPlus4   = any2Real(range.get_Item(iterator,13).Value);
+                           line.NightShiftHours    = range.get_Item(iterator,14).Value;
+                           line.Grade              = range.get_Item(iterator,15).Value;// == COMVariantType::VT_NULL? range.get_Item(iterator,15).Value : int2str(range.get_Item(iterator,15).Value);
+
+                           line.insert();
+                           ccCount +=1;
+                           type = range.get_Item(iterator+1, 1).Value;
+                       }
+                       while(iterator <= rowCount);
+                       //while (type != COMVariantType::VT_EMPTY);
+
+                       //cHANGE STATUS OF HEADER
+                       select forUpdate buffer where buffer.HcmLabourInvoiceImportNum == HcmLabourInvoiceTable.HcmLabourInvoiceImportNum;
+                       ttsBegin;
+                       buffer.HcmLabourInvoiceImportState = HcmLabourInvoiceImportState::Imported;
+                       buffer.update();
+                       ttsCommit;
+                       HcmLabourInvoiceTable_ds.research(true);
+                       HcmLabourInvoiceTable_ds.refresh();
+                       info('Import complete.');
+
+
+                       }
+
+                   }
+                   else
+                   {
+                       Error("Error occurred.");
+                   }
+
+
+           }
+
+        }

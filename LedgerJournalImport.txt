@@ -1,0 +1,66 @@
+void clicked()
+{
+     LedgerJournalName      LedgerJournalName;
+     LedgerJournalTable     ledgerJournalTable;
+     LedgerJournalTrans     ledgerJournalTrans;
+     LedgerJournalImports   ldgerJournalImports;
+     LedgerJournalCheckPost ledgerJournalCheckPost;
+     boolean processed      =   false;
+
+     NumberSeq numberSeq;
+
+     ;
+
+     ttsbegin;
+    // Find a ledgerJournalName record
+     select firstonly LedgerJournalName where LedgerJournalName.JournalType == LedgerJournalType::Daily;
+    //Created the ledgerJournalTable
+     ledgerJournalTable.JournalName         = LedgerJournalName.JournalName;
+     ledgerJournalTable.initFromLedgerJournalName();
+     ledgerJournalTable.Name                = 'Daily Payroll Journal';
+     ledgerJournalTable.insert();
+
+     numberSeq                              = NumberSeq::newGetVoucherFromCode(ledgerJournalTable.VoucherSeries);
+
+     while select forUpdate ldgerJournalImports where ldgerJournalImports.Processed == NoYes::No
+    {
+
+     ledgerJournalTrans.Voucher             = numberseq.voucher();
+
+     //Generate the transaction line
+     ledgerJournalTrans.JournalNum          = ledgerJournalTable.JournalNum;
+     ledgerJournalTrans.CurrencyCode        = 'ZWL';//ldgerJournalImports.CurrencyCode;
+     //ledgerJournalTrans.ExchRate            = Currency::exchRate(ledgerJournalTrans.CurrencyCode);
+     ledgerJournalTrans.AccountNum          = ldgerJournalImports.AccountType;
+     ledgerJournalTrans.AccountType         = LedgerJournalACType::Bank;
+     ledgerJournalTrans.AmountCurCredit     = ldgerJournalImports.Credit;
+     ledgerJournalTrans.AmountCurDebit      = ldgerJournalImports.Debit;
+     ledgerJournalTrans.TransDate           = today();
+     ledgerJournalTrans.Txt                 = ldgerJournalImports.TransactionTxt;
+     ledgerJournalTrans.OffsetAccount       = ldgerJournalImports.OffsetAccount;
+     ledgerJournalTrans.OffsetAccountType   = LedgerJournalACType::Ledger;
+     ledgerJournalTrans.insert();
+     info(strfmt('Journal Id:%1',ledgerJournalTable.JournalNum));
+     processed = true;
+
+   }
+    ttscommit;
+    if(processed == true)
+    {
+        ttsbegin;
+        while select forUpdate ldgerJournalImports where ldgerJournalImports.Processed == NoYes::No
+        {
+            ldgerJournalImports.Processed  = NoYes::Yes;
+            ldgerJournalImports.update();
+
+        }
+        info('Successfully created a journal');
+        ttscommit;
+    }
+
+    LedgerJournalImports_ds.executeQuery();
+    LedgerJournalImports_ds.research(true);
+
+
+
+}

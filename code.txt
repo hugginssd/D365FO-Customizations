@@ -1,0 +1,115 @@
+void clicked()
+{
+    Dialog _dialog;
+    DialogField _file;
+   // HcmLabourInvoiceTable buffer;
+    LedgerJournalImports line;
+    SysExcelApplication application;
+    SysExcelWorkbooks workbooks;
+    SysExcelWorkbook workbook;
+    SysExcelWorksheets worksheets;
+    SysExcelWorksheet worksheet;
+    SysExcelCells cells;
+    COMVariantType type;
+    Name name;
+    FileName filename;
+    int row;
+    int ccCount;
+    str costCenter;
+    ;
+    ccCount = 1;
+    costCenter = '';
+    //LedgerJournalACType ldgerJournalACType;
+    super();
+
+    //Prompt to import excel
+    _dialog = new Dialog('Please select the file to load');
+    _dialog.addText('Select file:');
+    _file = _dialog.addField(typeId(FilenameOpen));
+
+    _dialog.run();
+
+    if (_dialog.closedOK())
+    {
+       filename = _file.value();
+    }
+
+
+
+application = SysExcelApplication::construct();
+workbooks = application.workbooks();
+
+try
+{
+    workbooks.open(filename);
+}
+catch (Exception::Error)
+{
+    throw error('File cannot be opened.');
+}
+
+workbook = workbooks.item(1);
+worksheets = workbook.worksheets();
+worksheet = worksheets.itemFromNum(1); //Here 1 is the worksheet Number
+cells = worksheet.cells();
+
+row++; //skip column names
+
+do
+{
+    row++;
+    line.clear();
+    //line.HcmLabourInvoiceImportNum = HcmLabourInvoiceTable.HcmLabourInvoiceImportNum;
+
+    //line.Department = any2str(cells.item(row, 1).value().toString());
+    //line.Section = cells.item(row, 2).value().bStr();
+    line.CostCenter = cells.item(row, 1).value().bStr();
+    if(costCenter != cells.item(row, 1).value().bStr())
+    {
+        //restart the count
+        ccCount = 1;
+    }
+    costCenter = line.CostCenter;
+
+    line.Account    =   cells.item(row,1).value().bStr();
+    line.CostCenter =   cells.item(row,2).value().bStr();
+    line.CostElement=   cells.item(row,3).value().bStr();
+    line.TransactionTxt =   cells.item(row,4).value().bStr();
+    line.Debit          = cells.item(row,5).value().double();
+    line.Credit         = cells.item(row,6).value().double();
+    line.OffsetAccount  = cells.item(row,7).value().bStr();
+    //line.ReversingEntry
+    //line.ReversingDate  = str2date(cells.item(row,8).value().bStr(), 123);
+    line.CurrencyCode   = cells.item(row,9).value().bStr();
+   // line.OffsetAccountType = str2enum(ledgerJournalACType, cells.item(row,10).value().bStr());
+   
+    line.ECNumber = cells.item(row,3).value().bStr();
+    line.Surname = cells.item(row,4).value().bStr();
+    line.FirstName = cells.item(row,5).value().bStr();
+    line.NormalShiftHours = cells.item(row,6).value().double();
+    line.PlannedOT15 = cells.item(row,7).value().double();
+    line.PlannedOT20 = cells.item(row,8).value().double();
+    line.StandByAllowance = cells.item(row,9).value().double();
+    line.CalloutOT15 = cells.item(row,10).value().double();
+    line.CalloutOT20 = cells.item(row,11).value().double();
+    line.PPHOT20 = cells.item(row,12).value().double();
+    line.UndergroundPlus4 = cells.item(row,13).value().double();
+    line.NightShiftHours = cells.item(row,14).value().double();
+    line.Grade = cells.item(row,15).value().variantType() == COMVariantType::VT_BSTR? cells.item(row,15).value().bStr() : int2str(cells.item(row,15).value().double());
+
+    line.insert();
+    ccCount +=1;
+    type = cells.item(row+1, 1).value().variantType();
+}
+while (type != COMVariantType::VT_EMPTY);
+application.quit();
+
+ //cHANGE STATUS OF HEADER
+ select forUpdate buffer where buffer.HcmLabourInvoiceImportNum == HcmLabourInvoiceTable.HcmLabourInvoiceImportNum;
+ttsBegin;
+buffer.HcmLabourInvoiceImportState = HcmLabourInvoiceImportState::Imported;
+buffer.update();
+ttsCommit;
+element.RefreshDatasource();
+info('Import complete.');
+}

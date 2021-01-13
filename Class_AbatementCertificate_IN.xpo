@@ -1,0 +1,35 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: AbatementCertificate_IN unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #AbatementCertificate_IN
+    PROPERTIES
+      Name                #AbatementCertificate_IN
+      Origin              #{2D172166-0000-1000-EE85-72609F8FB21B}
+      LegacyId            #8550
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #classDeclaration
+        #/// <summary>
+        #/// Runs the form <c>AbatementCertificate_IN</c>.
+        #/// </summary>
+        #class AbatementCertificate_IN
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #main
+        #public static void main(Args args)
+        #{
+        #    new MenuFunction(menuitemdisplaystr(AbatementCertificate_IN), MenuItemType::Display).run();
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: END

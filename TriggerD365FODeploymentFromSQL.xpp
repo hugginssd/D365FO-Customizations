@@ -1,0 +1,7 @@
+select * from OrchestratorJob order by LastProcessedDateTime desc
+select * from RunBookTask order by StartDateTime desc
+
+  -----------------------------Trigger deployment from SQL----------------------
+
+update OrchestratorJob set State = 1 where JobId = 'FCPLIVE-daae574d-9e50-4745-8bb6-b1bb55160288'
+update RunBookTask set State = 1, Retries = 1 where RunbookTaskId = 'FCPLIVE-daae574d-9e50-4745-8bb6-b1bb55160288-downloadArtifacts'

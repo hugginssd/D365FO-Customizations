@@ -1,0 +1,68 @@
+
+        [DataField]
+        class PositionId 
+        {
+            /// <summary>
+            /// Positions lookup
+            /// </summary>
+            /// <param name = "_formControl"></param>
+            /// <param name = "_filterStr"></param>
+            public void lookup(FormControl _formControl, str _filterStr)
+           {
+
+
+            Query                   query;
+            QueryBuildDataSource    queryBuildDataSourceTable;
+            QueryBuildDataSource    queryBuildDataSourceTableDescriptions;
+            QueryBuildRange         queryBuildRange;
+            //you need to define the multitable, but initalize it AFTER you have defined the query
+            //SysTableLookup          sysTableLookup  = SysTableLookup::newParameters(tableNum(UnitOfMeasure), ctrl);
+            SysMultiTableLookup sysTableLookup;
+            query = new Query();
+
+            queryBuildDataSourceTable = query.addDataSource(tableNum(HcmPosition));
+
+            queryBuildDataSourceTableDescriptions = queryBuildDataSourceTable.addDataSource(tableNum(HcmPositionDetail));
+            queryBuildDataSourceTableDescriptions.joinMode(JoinMode::InnerJoin);
+            queryBuildDataSourceTableDescriptions.relations(false);
+            queryBuildDataSourceTableDescriptions.addLink(fieldNum(HcmPosition,RecId),fieldNum(HcmPositionDetail, Position));
+
+            //filter by the unit class being passed
+            queryBuildRange = queryBuildDataSourceTableDescriptions.addRange(fieldNum(HcmPositionDetail, Department));
+            queryBuildRange.value(queryValue('!=0'));
+
+            //define multiple table lookup query
+            sysTableLookup  = SysMultiTableLookup::newParameters(_formControl, query);
+            //add which fields will be displayed to the user (symbol + desc.)
+            sysTableLookup.addLookupfield(fieldNum(HcmPosition, PositionId),true);
+            sysTableLookup.addLookupfield(fieldNum(HcmPositionDetail, Description), 2);
+
+            //do not use for multi table
+            //sysTableLookup.parmQuery(query);
+            sysTableLookup.performFormLookup();
+
+            }
+
+            /// <summary>
+            /// Fill job and grade when position is selected
+            /// </summary>
+            public void modified()
+            {
+
+                HcmJobList                  hcmJobList;
+                HcmCompensationLevelLists   hcmCompensationLevelLists;
+                HcmPosition                 hcmPosition;
+
+                select * from hcmJobList where hcmJobList.PositionId == HcmLabourRequests_PositionId.valueStr();
+                HcmLabourRequests.JobId = hcmJobList.JobId;
+                //HcmLabourRequests_JobId.text(hcmJobList.JobId);
+                //ttscommit;
+                //info(strFmt('Modified %1 for job %2', HcmLabourRequests_PositionId.valueStr(), hcmJobList.JobId));
+
+                select * from  hcmCompensationLevelLists where hcmCompensationLevelLists.JobId == HcmLabourRequests_JobId.valueStr();
+                HcmLabourRequests.Grade = hcmCompensationLevelLists.CompensationLevelId;
+
+
+            }
+
+        }
