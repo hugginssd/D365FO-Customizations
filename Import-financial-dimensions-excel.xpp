@@ -1,0 +1,63 @@
+//Get the dimension display values then return the recid on the offset account
+public   refRecId getLedgerDimension(str _mainAccount, str _department,str _costCenter,str _purpose,str _typeOfMachine)
+    {
+        DimensionServiceProvider    DimensionServiceProvider = new DimensionServiceProvider();
+        LedgerAccountContract       LedgerAccountContract = new LedgerAccountContract();
+        DimensionAttributeValueContract ValueContract;
+        List                            ListValueContract = new List(Types::Class);
+
+        dimensionAttributeValueCombination  dimensionAttributeValueCombination;
+
+        DimensionStorage                    dimStorage;
+
+
+
+        if (_mainAccount)
+        {
+            ValueContract = new DimensionAttributeValueContract();
+            ValueContract.parmName('MainAccount') ;
+            ValueContract.parmValue(_mainAccount);
+            ListValueContract.addEnd(ValueContract);
+        }
+
+        if (_department)
+        {
+            ValueContract = new DimensionAttributeValueContract();
+            ValueContract.parmName('CDepartment') ;
+            ValueContract.parmValue(_department);
+            ListValueContract.addEnd(ValueContract);
+        }
+
+        if (_costCenter)
+        {
+            ValueContract = new DimensionAttributeValueContract();
+            ValueContract.parmName('CCostCenter') ;
+            ValueContract.parmValue(_costCenter);
+            ListValueContract.addEnd(ValueContract);
+        }
+        if (_purpose)
+        {
+            ValueContract = new DimensionAttributeValueContract();
+            ValueContract.parmName('Purpose') ;
+            ValueContract.parmValue(_purpose);
+            ListValueContract.addEnd(ValueContract);
+        }
+        if (_typeOfMachine)
+        {
+            ValueContract = new DimensionAttributeValueContract();
+            ValueContract.parmName('TypeOfMachine') ;
+            ValueContract.parmValue(_typeOfMachine);
+            ListValueContract.addEnd(ValueContract);
+        }
+        if(_mainAccount)
+        {
+            LedgerAccountContract.parmMainAccount(_mainAccount);
+        }
+        LedgerAccountContract.parmValues(ListValueContract);
+
+        dimStorage = DimensionServiceProvider::buildDimensionStorageForLedgerAccount(LedgerAccountContract);
+
+        dimensionAttributeValueCombination = DimensionAttributeValueCombination::find(dimStorage.save());
+
+        return dimensionAttributeValueCombination.RecId;
+    }
